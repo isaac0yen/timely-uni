@@ -1,0 +1,140 @@
+-- Create the database
+CREATE DATABASE IF NOT EXISTS isaac0yen_school_management;
+USE isaac0yen_school_management;
+
+-- Create users table
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('admin', 'student', 'lecturer') NOT NULL,
+    matric_no VARCHAR(20),
+    phone VARCHAR(20),
+    classRep BOOLEAN,
+    level INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create faculty table
+CREATE TABLE faculty (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    head INT,
+    created_by INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (head) REFERENCES users(id),
+    FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+-- Create department table
+CREATE TABLE department (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    faculty INT,
+    head INT,
+    created_by INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (faculty) REFERENCES faculty(id),
+    FOREIGN KEY (head) REFERENCES users(id),
+    FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+-- Create user_department table
+CREATE TABLE user_department (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    department_id INT,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (department_id) REFERENCES department(id)
+);
+
+-- Create course table
+CREATE TABLE course (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    department INT,
+    faculty INT,
+    code VARCHAR(20) NOT NULL,
+    lecturer INT,
+    created_by INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (department) REFERENCES department(id),
+    FOREIGN KEY (faculty) REFERENCES faculty(id),
+    FOREIGN KEY (lecturer) REFERENCES users(id),
+    FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+-- Create room table
+CREATE TABLE room (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    capacity INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create timetable table
+CREATE TABLE timetable (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    label VARCHAR(255) NOT NULL,
+    course INT,
+    time_start TIME NOT NULL,
+    time_end TIME NOT NULL,
+    date DATE NOT NULL,
+    level INT NOT NULL,
+    created_by INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (course) REFERENCES course(id),
+    FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+-- Create codes table
+CREATE TABLE codes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    code INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert sample data
+
+-- Users
+INSERT INTO users (name, email, password, role) VALUES
+('Admin User', 'admin@example.com', 'hashed_password', 'admin'),
+('John Doe', 'john@example.com', 'hashed_password', 'lecturer'),
+('Jane Smith', 'jane@example.com', 'hashed_password', 'student');
+
+-- Faculty
+INSERT INTO faculty (name, head, created_by) VALUES
+('Science', 1, 1),
+('Arts', 2, 1);
+
+-- Department
+INSERT INTO department (name, faculty, head, created_by) VALUES
+('Computer Science', 1, 2, 1),
+('Physics', 1, 2, 1),
+('English', 2, 2, 1);
+
+-- User Department
+INSERT INTO user_department (user_id, department_id) VALUES
+(2, 1),
+(3, 1);
+
+-- Course
+INSERT INTO course (name, department, faculty, code, lecturer, created_by) VALUES
+('Introduction to Programming', 1, 1, 'CS101', 2, 1),
+('Advanced Physics', 2, 1, 'PH201', 2, 1);
+
+-- Room
+INSERT INTO room (name, capacity) VALUES
+('Room A101', 50),
+('Room B202', 30);
+
+-- Timetable
+INSERT INTO timetable (label, course, time_start, time_end, date, level, created_by) VALUES
+('CS101 Lecture', 1, '09:00:00', '11:00:00', '2023-06-01', 1, 1),
+('PH201 Lecture', 2, '14:00:00', '16:00:00', '2023-06-02', 2, 1);
+
+-- Codes
+INSERT INTO codes (email, code) VALUES
+('newuser@example.com', 1234);
