@@ -1,0 +1,29 @@
+/* Register.css */
+
+.register-page {
+    background-size: cover;
+    background-position: center;
+  }
+  
+  .card {
+    border: none;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .card-body {
+    padding: 1.5rem; /* Reduced padding for a more compact look */
+  }
+  
+  .student-info {
+    margin-top: 1rem; /* Space between general fields and student-specific fields */
+  }
+  
+  .btn-primary {
+    transition: all 0.3s ease;
+  }
+  
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.25);
+  }
+  
