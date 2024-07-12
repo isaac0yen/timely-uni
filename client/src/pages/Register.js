@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useParams, useLocation, useNavigate } from 'react-router-dom';
+import { Container, Row, Col, Form, Button, Alert, Nav } from 'react-bootstrap';
+import { FaHome, FaSignInAlt, FaUserPlus } from 'react-icons/fa';
 import { api } from '../apis';
-import "../css/Register.css"; // Import custom CSS for additional styling
-import { Container, Row, Col, Form, Button, Alert } from 'react-bootstrap';
+import "../css/Register.css";
 
 const RegisterPage = () => {
   const { role } = useParams();
@@ -67,13 +68,20 @@ const RegisterPage = () => {
   };
 
   return (
-    <Container fluid className="register-page vh-100 d-flex align-items-center justify-content-center" style={{ background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>
-      <Row className="w-100 justify-content-center">
-        <Col md={6} lg={4} className="text-center">
-          <h1 className="mb-4 text-primary">Register as {role.charAt(0).toUpperCase() + role.slice(1)}</h1>
-          {error && <Alert variant="danger">{error}</Alert>}
-          <div className="card">
-            <div className="card-body">
+    <div className="d-flex flex-column min-vh-100">
+      <Nav className="justify-content-center py-3 bg-navy">
+        <Nav.Item>
+          <Nav.Link as={Link} to="/" className="text-white">Lecture Reminder System</Nav.Link>
+        </Nav.Item>
+      </Nav>
+
+      <Container fluid className="flex-grow-1 d-flex align-items-center justify-content-center register-background">
+        <Row className="w-100 justify-content-center">
+          <Col md={6} lg={4} className="text-center">
+            <h1 className="mb-4 text-navy animate-fade-in">Register as {role.charAt(0).toUpperCase() + role.slice(1)}</h1>
+            {error && <Alert variant="danger">{error}</Alert>}
+            <div className="card animate-slide-up">
+              <div className="card-body">
               <Form onSubmit={handleSubmit} className="text-start">
                 <Form.Group className="mb-3" controlId="name">
                   <Form.Label>Name</Form.Label>
@@ -207,7 +215,27 @@ const RegisterPage = () => {
         </Col>
       </Row>
     </Container>
+    <Nav className="justify-content-center py-3 bg-navy">
+        <Nav.Item>
+          <Nav.Link as={Link} to="/" className="text-white"><FaHome /> Home</Nav.Link>
+        </Nav.Item>
+        <Nav.Item>
+          <Nav.Link as={Link} to="/login" className="text-white"><FaSignInAlt /> Login</Nav.Link>
+        </Nav.Item>
+        <Nav.Item>
+  <Nav.Link
+    as={Link}
+    to={role === 'admin' ? `/verify-email?role=${role}` : `/register/${role}`}
+    className="text-white"
+  >
+    <FaUserPlus /> Register
+  </Nav.Link>
+</Nav.Item>
+
+      </Nav>
+    </div>
   );
 };
+
 
 export default RegisterPage;
