@@ -79,10 +79,10 @@ const createStudent = async (req, res) => {
     if (parseInt(level) < 0) {
       throw new Error("Invalid level");
     }
-    if (Validate.integer(faculty)) {
+    if (parseInt(faculty) < 0) {
       throw new Error("Invalid faculty");
     }
-    if (Validate.integer(department)) {
+    if (parseInt(department) < 0) {
       throw new Error("Invalid department");
     }
 

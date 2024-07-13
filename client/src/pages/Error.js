@@ -39,7 +39,7 @@ const ErrorPage = () => {
           <Nav.Link as={Link} to="/" className="text-white"><FaHome /> Home</Nav.Link>
         </Nav.Item>
         <Nav.Item>
-          <Nav.Link as={Link} to="/login" className="text-white"><FaSignInAlt /> Login</Nav.Link>
+          <Nav.Link as={Link} to="/" className="text-white"><FaSignInAlt /> Login</Nav.Link>
         </Nav.Item>
         <Nav.Item>
           <Nav.Link as={Link} to="/register" className="text-white"><FaUserPlus /> Register</Nav.Link>

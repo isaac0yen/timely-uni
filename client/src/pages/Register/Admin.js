@@ -1,24 +1,54 @@
 import React, { useState } from 'react';
-import { Card, Form, Button, Container, Alert, Nav } from 'react-bootstrap';
-import { FaEnvelope, FaPaperPlane, FaCheckCircle, FaSignInAlt, FaHome } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
-import { ToastContainer, toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import {
+  Box,
+  Container,
+  Typography,
+  TextField,
+  Button,
+  AppBar,
+  Toolbar,
+  Card,
+  CardContent,
+  Grid,
+  Alert,
+  useTheme,
+  useMediaQuery,
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
+import {
+  Email as EmailIcon,
+  Lock as LockIcon,
+  Person as PersonIcon,
+  Phone as PhoneIcon,
+  VerifiedUser as VerifiedUserIcon,
+  Send as SendIcon,
+  Home as HomeIcon,
+  Login as LoginIcon,
+} from '@mui/icons-material';
+import { motion } from 'framer-motion';
+
 import { api } from '../../apis/index';
 
+const StyledAppBar = styled(AppBar)(({ theme }) => ({
+  backgroundColor: theme.palette.grey[800],
+}));
 
-const Footer = () => {
-  return (
-    <Nav className="justify-content-center py-3 bg-navy fixed-bottom">
-      <Nav.Item>
-        <Nav.Link as={Link} to="/" className="text-white"><FaHome /> Home</Nav.Link>
-      </Nav.Item>
-      <Nav.Item>
-        <Nav.Link as={Link} to="/login" className="text-white"><FaSignInAlt /> Login</Nav.Link>
-      </Nav.Item>
-    </Nav>
-  )
-}
+const StyledForm = styled('form')(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: theme.spacing(3),
+}));
+
+const StyledCard = styled(Card)(({ theme }) => ({
+  maxWidth: 600,
+  margin: '0 auto',
+  [theme.breakpoints.up('md')]: {
+    maxWidth: 800,
+  },
+}));
 
 const SendConfirmMail = ({ updateState }) => {
   const [email, setEmail] = useState('');
@@ -48,58 +78,40 @@ const SendConfirmMail = ({ updateState }) => {
   };
 
   return (
-    <>
-      <Container className="align-items-center justify-content-center" style={{ minHeight: '100vh' }}>
-        <Card className="shadow-lg" style={{ maxWidth: '400px', width: '100%' }}>
-          <Card.Body className="p-5">
-            <h2 className="text-center mb-4" style={{ color: '#0056b3' }}>
-              <FaEnvelope className="me-2" />
-              Send Confirmation Email
-            </h2>
-            <Form onSubmit={handleSubmit}>
-              <Form.Group className="mb-4" controlId="formBasicEmail">
-                <Form.Label>Email address</Form.Label>
-                <Form.Control
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  style={{ borderColor: '#4d94ff' }}
-                />
-              </Form.Group>
-              <div className="d-grid">
-                <Button
-                  variant="primary"
-                  type="submit"
-                  disabled={isLoading || isSent}
-                  style={{ backgroundColor: '#0056b3', borderColor: '#0056b3' }}
-                >
-                  {isLoading ? (
-                    'Sending...'
-                  ) : isSent ? (
-                    <>
-                      <FaCheckCircle className="me-2" />
-                      Sent
-                    </>
-                  ) : (
-                    <>
-                      <FaPaperPlane className="me-2" />
-                      Send Confirmation
-                    </>
-                  )}
-                </Button>
-              </div>
-            </Form>
-          </Card.Body>
-        </Card>
-        <Footer />
-      </Container>
-    </>
+    <Container maxWidth="sm">
+      <StyledCard>
+        <CardContent>
+          <Typography variant="h4" component="h1" gutterBottom align="center" color="primary">
+            <EmailIcon fontSize="large" /> Send Confirmation Email
+          </Typography>
+          <StyledForm onSubmit={handleSubmit}>
+            <TextField
+              fullWidth
+              label="Email address"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              variant="outlined"
+            />
+            <Button
+              fullWidth
+              variant="contained"
+              color="primary"
+              type="submit"
+              disabled={isLoading || isSent}
+              startIcon={isSent ? <VerifiedUserIcon /> : <SendIcon />}
+            >
+              {isLoading ? 'Sending...' : isSent ? 'Sent' : 'Send Confirmation'}
+            </Button>
+          </StyledForm>
+        </CardContent>
+      </StyledCard>
+    </Container>
   );
 };
 
-function Admin() {
-  const [hasSentMail, setHasSentMail] = useState(false);
+const AdminRegistrationForm = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -114,33 +126,14 @@ function Admin() {
   const validateForm = () => {
     let newErrors = {};
 
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-
-    if (!formData.code.trim()) {
-      newErrors.code = 'Verification code is required';
-    }
-
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
-    }
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
+    if (!formData.password) newErrors.password = 'Password is required';
+    else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+    if (!formData.code.trim()) newErrors.code = 'Verification code is required';
+    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -148,10 +141,7 @@ function Admin() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prevData => ({
-      ...prevData,
-      [name]: value
-    }));
+    setFormData(prevData => ({ ...prevData, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -175,114 +165,159 @@ function Admin() {
     }
   };
 
-  if (!hasSentMail) {
-    return (
-      <div className="container mt-5">
-        <SendConfirmMail updateState={setHasSentMail} />
-        <ToastContainer />
-      </div>
-    )
-  }
   return (
-    <>
-      <Nav className="justify-content-center py-3 bg-navy">
-        <Nav.Item>
-          <Nav.Link as={Link} to="/" className="text-white">Lecture Reminder System</Nav.Link>
-        </Nav.Item>
-      </Nav>
-      <div className="container mt-5">
-        <div className="row justify-content-center">
-          <div className="col-md-6">
-            <div className="card shadow">
-              <div className="card-body">
-                <h2 className="card-title text-center mb-4">Admin Registration</h2>
-                <Form onSubmit={handleSubmit}>
-                  <Form.Group className="mb-3" controlId="name">
-                    <Form.Label>Name</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      isInvalid={!!errors.name}
-                    />
-                    <Form.Control.Feedback type="invalid">{errors.name}</Form.Control.Feedback>
-                  </Form.Group>
-                  <Form.Group className="mb-3" controlId="email">
-                    <Form.Label>Email</Form.Label>
-                    <Form.Control
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      isInvalid={!!errors.email}
-                    />
-                    <Form.Control.Feedback type="invalid">{errors.email}</Form.Control.Feedback>
-                  </Form.Group>
-                  <Form.Group className="mb-3" controlId="password">
-                    <Form.Label>Password</Form.Label>
-                    <Form.Control
-                      type="password"
-                      name="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      isInvalid={!!errors.password}
-                    />
-                    <Form.Control.Feedback type="invalid">{errors.password}</Form.Control.Feedback>
-                  </Form.Group>
-                  <Form.Group className="mb-3" controlId="confirmPassword">
-                    <Form.Label>Confirm Password</Form.Label>
-                    <Form.Control
-                      type="password"
-                      name="confirmPassword"
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      isInvalid={!!errors.confirmPassword}
-                    />
-                    <Form.Control.Feedback type="invalid">{errors.confirmPassword}</Form.Control.Feedback>
-                  </Form.Group>
-                  <Form.Group className="mb-3" controlId="code">
-                    <Form.Label>Verification Code From the Email</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="code"
-                      value={formData.code}
-                      onChange={handleChange}
-                      isInvalid={!!errors.code}
-                    />
-                    <Form.Control.Feedback type="invalid">{errors.code}</Form.Control.Feedback>
-                  </Form.Group>
-                  <Form.Group className="mb-3" controlId="phone">
-                    <Form.Label>Phone</Form.Label>
-                    <Form.Control
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      isInvalid={!!errors.phone}
-                    />
-                    <Form.Control.Feedback type="invalid">{errors.phone}</Form.Control.Feedback>
-                  </Form.Group>
-                  <div className="d-grid">
-                    <Button variant="primary" type="submit" size="lg">
-                      Register
-                    </Button>
-                  </div>
-                </Form>
-                {Object.keys(errors).length > 0 && (
-                  <Alert variant="danger" className="mt-3">
-                    Please correct the errors in the form before submitting.
-                  </Alert>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-        <Footer />
-        <ToastContainer />
-      </div>
-    </>
-  )
-}
+    <StyledCard>
+      <CardContent>
+        <Typography variant="h4" component="h1" gutterBottom align="center" color="primary">
+          Admin Registration
+        </Typography>
+        <StyledForm onSubmit={handleSubmit}>
+          <TextField
+            fullWidth
+            label="Name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            error={!!errors.name}
+            helperText={errors.name}
+            required
+            InputProps={{
+              startAdornment: <PersonIcon color="action" />,
+            }}
+          />
+          <TextField
+            fullWidth
+            label="Email"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleChange}
+            error={!!errors.email}
+            helperText={errors.email}
+            required
+            InputProps={{
+              startAdornment: <EmailIcon color="action" />,
+            }}
+          />
+          <TextField
+            fullWidth
+            label="Password"
+            name="password"
+            type="password"
+            value={formData.password}
+            onChange={handleChange}
+            error={!!errors.password}
+            helperText={errors.password}
+            required
+            InputProps={{
+              startAdornment: <LockIcon color="action" />,
+            }}
+          />
+          <TextField
+            fullWidth
+            label="Confirm Password"
+            name="confirmPassword"
+            type="password"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            error={!!errors.confirmPassword}
+            helperText={errors.confirmPassword}
+            required
+            InputProps={{
+              startAdornment: <LockIcon color="action" />,
+            }}
+          />
+          <TextField
+            fullWidth
+            label="Verification Code"
+            name="code"
+            value={formData.code}
+            onChange={handleChange}
+            error={!!errors.code}
+            helperText={errors.code}
+            required
+            InputProps={{
+              startAdornment: <VerifiedUserIcon color="action" />,
+            }}
+          />
+          <TextField
+            fullWidth
+            label="Phone"
+            name="phone"
+            value={formData.phone}
+            onChange={handleChange}
+            error={!!errors.phone}
+            helperText={errors.phone}
+            required
+            InputProps={{
+              startAdornment: <PhoneIcon color="action" />,
+            }}
+          />
+          <Button
+            fullWidth
+            variant="contained"
+            color="primary"
+            type="submit"
+            size="large"
+          >
+            Register
+          </Button>
+        </StyledForm>
+        {Object.keys(errors).length > 0 && (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            Please correct the errors in the form before submitting.
+          </Alert>
+        )}
+      </CardContent>
+    </StyledCard>
+  );
+};
 
-export default Admin
+const Admin = () => {
+  const [hasSentMail, setHasSentMail] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <StyledAppBar position="static">
+        <Toolbar>
+          <Typography variant="h6" component={Link} to="/" sx={{ color: 'white', textDecoration: 'none', flexGrow: 1 }}>
+            Lecture Reminder System
+          </Typography>
+        </Toolbar>
+      </StyledAppBar>
+
+      <Container component="main" sx={{ flexGrow: 1, py: 4 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          {!hasSentMail ? (
+            <SendConfirmMail updateState={setHasSentMail} />
+          ) : (
+            <AdminRegistrationForm />
+          )}
+        </motion.div>
+      </Container>
+
+      <StyledAppBar position="static" component="footer">
+        <Toolbar sx={{ justifyContent: 'center' }}>
+          <Button
+            component={Link}
+            to="/"
+            color="inherit"
+            startIcon={<LoginIcon />}
+          >
+            Login
+          </Button>
+        </Toolbar>
+      </StyledAppBar>
+
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
+    </Box>
+  );
+};
+
+export default Admin;

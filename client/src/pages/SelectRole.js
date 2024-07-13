@@ -1,54 +1,114 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Container, Row, Col, Card, Nav } from 'react-bootstrap';
-import { FaUserTie, FaChalkboardTeacher, FaUserGraduate, FaHome, } from 'react-icons/fa';
-import "../css/Home.css";
+import {
+  Box,
+  Container,
+  Typography,
+  Card,
+  CardContent,
+  Grid,
+  AppBar,
+  Toolbar,
+  Button,
+  useTheme,
+  useMediaQuery,
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
+import {
+  AdminPanelSettings as AdminIcon,
+  School as LecturerIcon,
+  Person as StudentIcon,
+  Login as LoginIcon,
+} from '@mui/icons-material';
+import { motion } from 'framer-motion';
 
-const RoleBox = ({ role, title, icon }) => (
-  <Col xs={12} className="mb-4">
-    <Card as={Link} to={`/register/${role}`} className="text-center text-decoration-none role-card">
-      <Card.Body className="d-flex flex-row justify-content-start align-items-center p-4">
-        {icon}
-        <div className="ms-4 text-start">
-          <Card.Title className="mb-2">{title}</Card.Title>
-          <Card.Text>Click to continue as {title}</Card.Text>
-        </div>
-      </Card.Body>
-    </Card>
-  </Col>
+const StyledAppBar = styled(AppBar)(({ theme }) => ({
+  backgroundColor: theme.palette.grey[800],
+}));
+
+const StyledCard = styled(Card)(({ theme }) => ({
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
+  '&:hover': {
+    transform: 'translateY(-5px)',
+    boxShadow: theme.shadows[8],
+  },
+}));
+
+const RoleBox = ({ role, title, icon: Icon }) => (
+  <Grid item xs={12} sm={6} md={4}>
+    <StyledCard component={Link} to={`/register/${role}`} sx={{ textDecoration: 'none', color: 'inherit' }}>
+      <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3 }}>
+        <Icon sx={{ fontSize: 48, color: 'primary.main', mr: 2 }} />
+        <Box>
+          <Typography variant="h6" component="h2" gutterBottom sx={{ color: 'black' }}>
+            {title}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ color: 'black' }}>
+            Click to continue as {title}
+          </Typography>
+        </Box>
+      </CardContent>
+    </StyledCard>
+  </Grid>
 );
 
 const SelectRole = () => {
-  return (
-    <div className="d-flex flex-column min-vh-100">
-      <Nav className="justify-content-center py-3 bg-navy">
-        <Nav.Item>
-          <Nav.Link as={Link} to="/" className="text-white">Lecture Reminder System</Nav.Link>
-        </Nav.Item>
-      </Nav>
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-      <Container fluid className="flex-grow-1 d-flex flex-column justify-content-center py-5 home-background">
-        <Row className="justify-content-center mb-5">
-          <Col md={8} className="text-center">
-            <h1 className="display-4 fw-bold text-navy animate-fade-in">Lecture Reminder System</h1>
-            <p className="lead text-navy animate-fade-in-delay">Choose your role to get started</p>
-          </Col>
-        </Row>
-        <Row className="justify-content-center animate-slide-up">
-          <Col md={6}>
-            <RoleBox role="admin" title="Admin" icon={<FaUserTie className="fs-1 text-navy" />} />
-            <RoleBox role="lecturer" title="Lecturer" icon={<FaChalkboardTeacher className="fs-1 text-navy" />} />
-            <RoleBox role="student" title="Student" icon={<FaUserGraduate className="fs-1 text-navy" />} />
-          </Col>
-        </Row>
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <StyledAppBar position="static">
+        <Toolbar>
+          <Typography variant="h6" component={Link} to="/" sx={{ color: 'white', textDecoration: 'none', flexGrow: 1 }}>
+            Lecture Reminder System
+          </Typography>
+        </Toolbar>
+      </StyledAppBar>
+
+      <Container component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', py: 4 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Typography variant="h2" align="center" gutterBottom sx={{ fontWeight: 'bold', color: 'black' }}>
+            Lecture Reminder System
+          </Typography>
+          <Typography variant="h5" align="center" color="text.secondary" paragraph sx={{ color: 'black' }}>
+            Choose your role to get started
+          </Typography>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <Grid container spacing={3} justifyContent="center" sx={{ mt: 4 }}>
+            <RoleBox role="admin" title="Admin" icon={AdminIcon} />
+            <RoleBox role="lecturer" title="Lecturer" icon={LecturerIcon} />
+            <RoleBox role="student" title="Student" icon={StudentIcon} />
+          </Grid>
+        </motion.div>
       </Container>
 
-      <Nav className="justify-content-center py-3 bg-navy">
-        <Nav.Item>
-          <Nav.Link as={Link} to="/" className="text-white"><FaHome /> Home</Nav.Link>
-        </Nav.Item>
-      </Nav>
-    </div>
+      <StyledAppBar position="static" component="footer">
+        <Toolbar sx={{ justifyContent: 'center' }}>
+          <Button
+            component={Link}
+            to="/"
+            color="inherit"
+            startIcon={<LoginIcon />}
+          >
+            Login
+          </Button>
+        </Toolbar>
+      </StyledAppBar>
+    </Box>
   );
 };
 

@@ -37,7 +37,7 @@ import { api } from '../apis/index';
 const StyledDrawer = styled(Drawer)(({ theme }) => ({
   '& .MuiDrawer-paper': {
     backgroundColor: theme.palette.grey[900],
-    color: theme.palette.common.black,
+    color: theme.palette.common.white,
     width: 240,
   },
 }));
@@ -60,6 +60,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
     transform: 'translateY(-5px)',
     boxShadow: theme.shadows[8],
   },
+  color: theme.palette.common.black,
 }));
 
 const Dashboard = () => {
@@ -183,11 +184,12 @@ const Dashboard = () => {
           ml: { sm: '240px' },
           backgroundColor: theme.palette.grey[200],
           minHeight: '100vh',
+          color: theme.palette.common.black,
         }}
       >
         <Typography variant="h4" gutterBottom>
-          Welcome, {user?.name}
-        </Typography>
+          Welcome, {user?.name.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+          </Typography>
         <Typography variant="subtitle1" gutterBottom>
           {currentTime.toLocaleString(DateTime.DATETIME_FULL)}
         </Typography>

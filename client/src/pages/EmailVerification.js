@@ -90,11 +90,6 @@ const EmailVerificationPage = () => {
                 )}
               </Card.Body>
             </Card>
-            {/* <div className="text-center mt-3 animate-fade-in-delay">
-              <Link to={`/login/${role}`} className="text-decoration-none me-2 text-navy">Login</Link>
-              |
-              <Link to="/" className="text-decoration-none ms-2 text-navy">Back to Home</Link>
-            </div> */}
           </Col>
         </Row>
       </Container>
@@ -105,7 +100,7 @@ const EmailVerificationPage = () => {
           <Nav.Link as={Link} to="/" className="text-white"><FaHome /> Home</Nav.Link>
         </Nav.Item>
         <Nav.Item>
-          <Nav.Link as={Link} to="/login" className="text-white"><FaSignInAlt /> Login</Nav.Link>
+          <Nav.Link as={Link} to="/" className="text-white"><FaSignInAlt /> Login</Nav.Link>
         </Nav.Item>
         <Nav.Item>
           <Nav.Link as={Link} to= {`/register/${role}`}className="text-white"><FaUserPlus /> Register</Nav.Link>

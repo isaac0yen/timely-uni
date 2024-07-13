@@ -25,10 +25,7 @@ const Mail = async (email, html, subject) => {
 
     await transporter.sendMail(mailOptions, async (error, info) => {
       if (error) {
-        Logger.error(
-          "There was an error sending the email on line 43 " ,
-          error,
-        );
+        console.log(error);
       }
       return true;
     });

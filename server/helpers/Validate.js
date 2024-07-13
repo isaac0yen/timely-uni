@@ -3,7 +3,7 @@ const Validate = {
   URL: (url) => /^(ftp|http|https):\/\/[^ "]+$/.test(url),
   phone: (phone) => /^[0-9]+$/.test(phone),
   integer: (value) =>
-    typeof value === "number" && Number.isInteger(Int(value)),
+    typeof value === "number" && Number.isInteger(value),
   positiveInteger: (value) =>
     typeof value === "number" && Number.isInteger(value) && value >= 0,
   string: (value) =>
