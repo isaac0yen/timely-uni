@@ -1,12 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Container, Row, Col, Card, Nav } from 'react-bootstrap';
-import { FaUserTie, FaChalkboardTeacher, FaUserGraduate, FaHome, FaSignInAlt, FaUserPlus } from 'react-icons/fa';
+import { FaUserTie, FaChalkboardTeacher, FaUserGraduate, FaHome, } from 'react-icons/fa';
 import "../css/Home.css";
 
 const RoleBox = ({ role, title, icon }) => (
   <Col xs={12} className="mb-4">
-    <Card as={Link} to={`/login/${role}`} className="text-center text-decoration-none role-card">
+    <Card as={Link} to={`/register/${role}`} className="text-center text-decoration-none role-card">
       <Card.Body className="d-flex flex-row justify-content-start align-items-center p-4">
         {icon}
         <div className="ms-4 text-start">
@@ -18,7 +18,7 @@ const RoleBox = ({ role, title, icon }) => (
   </Col>
 );
 
-const HomePage = () => {
+const SelectRole = () => {
   return (
     <div className="d-flex flex-column min-vh-100">
       <Nav className="justify-content-center py-3 bg-navy">
@@ -47,15 +47,9 @@ const HomePage = () => {
         <Nav.Item>
           <Nav.Link as={Link} to="/" className="text-white"><FaHome /> Home</Nav.Link>
         </Nav.Item>
-        {/* <Nav.Item>
-          <Nav.Link as={Link} to="/login" className="text-white"><FaSignInAlt /> Login</Nav.Link>
-        </Nav.Item>
-        <Nav.Item>
-          <Nav.Link as={Link} to="/register" className="text-white"><FaUserPlus /> Register</Nav.Link>
-        </Nav.Item> */}
       </Nav>
     </div>
   );
 };
 
-export default HomePage;
+export default SelectRole;

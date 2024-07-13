@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
 import { Link, useParams, useLocation, useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Form, Button, Alert, Nav } from 'react-bootstrap';
-import { FaHome, FaSignInAlt, FaUserPlus } from 'react-icons/fa';
+import { Container, Row, Col, Form, Button, Alert, Nav, Spinner } from 'react-bootstrap';
+import { FaHome, FaSignInAlt } from 'react-icons/fa';
 import { api } from '../apis';
 import "../css/Register.css";
+import Admin from './Register/Admin';
+import StudentSelect from './Register/StudentSelect';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const RegisterPage = () => {
   const { role } = useParams();
   const location = useLocation();
-  const history = useNavigate();
+  const navigate = useNavigate();
   const searchParams = new URLSearchParams(location.search);
   const email = searchParams.get('email');
   const code = searchParams.get('code');
@@ -28,6 +32,7 @@ const RegisterPage = () => {
   });
 
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -40,18 +45,17 @@ const RegisterPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords don't match");
+      setIsLoading(false);
       return;
     }
 
     try {
       let response;
       switch (role) {
-        case 'admin':
-          response = await api.user.createAdmin(formData);
-          break;
         case 'lecturer':
           response = await api.user.createLecturer(formData);
           break;
@@ -61,11 +65,25 @@ const RegisterPage = () => {
         default:
           throw new Error('Invalid role');
       }
-      history.push(`/login/${role}`);
+
+      if (response && response.status === 200) {
+        toast.success('Registration successful!');
+        setTimeout(() => {
+          navigate("/");
+        }, 2000);
+      } else {
+        toast.error('Registration failed. Please try again.');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'An error occurred during registration');
+      toast.error(err.response?.data?.message || 'An error occurred during registration');
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  if (role === 'admin') {
+    return <Admin />;
+  }
 
   return (
     <div className="d-flex flex-column min-vh-100">
@@ -82,140 +100,92 @@ const RegisterPage = () => {
             {error && <Alert variant="danger">{error}</Alert>}
             <div className="card animate-slide-up">
               <div className="card-body">
-              <Form onSubmit={handleSubmit} className="text-start">
-                <Form.Group className="mb-3" controlId="name">
-                  <Form.Label>Name</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3" controlId="email">
-                  <Form.Label>Email</Form.Label>
-                  <Form.Control
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    readOnly={!!email}
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3" controlId="password">
-                  <Form.Label>Password</Form.Label>
-                  <Form.Control
-                    type="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3" controlId="confirmPassword">
-                  <Form.Label>Confirm Password</Form.Label>
-                  <Form.Control
-                    type="password"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    required
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3" controlId="code">
-                  <Form.Label>Verification Code</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="code"
-                    value={formData.code}
-                    onChange={handleChange}
-                    required
-                    readOnly={!!code}
-                  />
-                </Form.Group>
-                {role === 'student' && (
-                  <Row>
-                    <Col md={6}>
-                      <Form.Group className="mb-3" controlId="matric_no">
-                        <Form.Label>Matric Number</Form.Label>
-                        <Form.Control
-                          type="text"
-                          name="matric_no"
-                          value={formData.matric_no}
-                          onChange={handleChange}
-                          required
-                        />
-                      </Form.Group>
-                      <Form.Group className="mb-3" controlId="phone">
-                        <Form.Label>Phone Number</Form.Label>
-                        <Form.Control
-                          type="tel"
-                          name="phone"
-                          value={formData.phone}
-                          onChange={handleChange}
-                          required
-                        />
-                      </Form.Group>
-                      <Form.Group className="mb-3" controlId="classRep">
-                        <Form.Check
-                          type="checkbox"
-                          id="classRep"
-                          name="classRep"
-                          label="I am a class representative"
-                          checked={formData.classRep}
-                          onChange={handleChange}
-                        />
-                      </Form.Group>
-                    </Col>
-                    <Col md={6}>
-                      <Form.Group className="mb-3" controlId="level">
-                        <Form.Label>Level</Form.Label>
-                        <Form.Control
-                          type="text"
-                          name="level"
-                          value={formData.level}
-                          onChange={handleChange}
-                          required
-                        />
-                      </Form.Group>
-                      <Form.Group className="mb-3" controlId="faculty">
-                        <Form.Label>Faculty</Form.Label>
-                        <Form.Control
-                          type="text"
-                          name="faculty"
-                          value={formData.faculty}
-                          onChange={handleChange}
-                          required
-                        />
-                      </Form.Group>
-                      <Form.Group className="mb-3" controlId="department">
-                        <Form.Label>Department</Form.Label>
-                        <Form.Control
-                          type="text"
-                          name="department"
-                          value={formData.department}
-                          onChange={handleChange}
-                          required
-                        />
-                      </Form.Group>
-                    </Col>
-                  </Row>
-                )}
-                <Button variant="primary" type="submit" className="w-100">
-                  Register
-                </Button>
-              </Form>
+                <Form onSubmit={handleSubmit} className="text-start">
+                  <Form.Group className="mb-3" controlId="name">
+                    <Form.Label>Name</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
+                    />
+                  </Form.Group>
+                  <Form.Group className="mb-3" controlId="email">
+                    <Form.Label>Email</Form.Label>
+                    <Form.Control
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
+                      readOnly={!!email}
+                    />
+                  </Form.Group>
+                  <Form.Group className="mb-3" controlId="password">
+                    <Form.Label>Password</Form.Label>
+                    <Form.Control
+                      type="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      required
+                    />
+                  </Form.Group>
+                  <Form.Group className="mb-3" controlId="confirmPassword">
+                    <Form.Label>Confirm Password</Form.Label>
+                    <Form.Control
+                      type="password"
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      required
+                    />
+                  </Form.Group>
+                  {role === 'student' && (
+                    <Row>
+                      <Col md={6}>
+                        <Form.Group className="mb-3" controlId="matric_no">
+                          <Form.Label>Matric Number</Form.Label>
+                          <Form.Control
+                            type="text"
+                            name="matric_no"
+                            value={formData.matric_no}
+                            onChange={handleChange}
+                            required
+                          />
+                        </Form.Group>
+                        <Form.Group className="mb-3" controlId="phone">
+                          <Form.Label>Phone Number</Form.Label>
+                          <Form.Control
+                            type="tel"
+                            name="phone"
+                            value={formData.phone}
+                            onChange={handleChange}
+                            required
+                          />
+                        </Form.Group>
+                      </Col>
+                      <StudentSelect formData={formData} handleChange={handleChange} />
+                    </Row>
+                  )}
+                  <Button variant="primary" type="submit" className="w-100" disabled={isLoading}>
+                    {isLoading ? (
+                      <>
+                        <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
+                        <span className="ms-2">Registering...</span>
+                      </>
+                    ) : (
+                      'Register'
+                    )}
+                  </Button>
+                </Form>
+              </div>
             </div>
-          </div>
-          <div className="text-center mt-3">
-            Already have an account? <Link to={`/login/${role}`}>Login</Link>
-          </div>
-        </Col>
-      </Row>
-    </Container>
-    <Nav className="justify-content-center py-3 bg-navy">
+          </Col>
+        </Row>
+      </Container>
+      <Nav className="justify-content-center py-3 bg-navy">
         <Nav.Item>
           <Nav.Link as={Link} to="/" className="text-white"><FaHome /> Home</Nav.Link>
         </Nav.Item>
@@ -223,19 +193,11 @@ const RegisterPage = () => {
           <Nav.Link as={Link} to="/login" className="text-white"><FaSignInAlt /> Login</Nav.Link>
         </Nav.Item>
         <Nav.Item>
-  <Nav.Link
-    as={Link}
-    to={role === 'admin' ? `/verify-email?role=${role}` : `/register/${role}`}
-    className="text-white"
-  >
-    <FaUserPlus /> Register
-  </Nav.Link>
-</Nav.Item>
-
+        </Nav.Item>
       </Nav>
+      <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
     </div>
   );
 };
-
 
 export default RegisterPage;

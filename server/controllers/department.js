@@ -67,11 +67,15 @@ const updateDepartment = async (req, res) => {
 
     res.status(200).json({
       message: "Department updated successfully",
-    });
+      status: 200,
+    })
+      ;
   } catch (error) {
     res.status(200).json({
       message: error.message,
-    });
+      status: 200,
+    })
+      ;
   }
 
 }
@@ -92,6 +96,7 @@ const getDepartment = async () => {
 
     res.status(200).json({
       message: "Department fetched successfully",
+      status: 200,
       data: department,
     });
   } catch (error) {
@@ -101,20 +106,24 @@ const getDepartment = async () => {
   }
 }
 
-const getAllDepartments = () => {
-  try{
-    const departments = db.findMany("department", {});
+const getAllDepartments = async (req, res) => {
+
+  const { faculty } = req.params;
+
+  try {
+    const departments = await db.findMany("department", { faculty });
 
     if (!Validate.array(departments)) {
       throw new Error("Invalid departments");
     }
 
     res.status(200).json({
-      message:"Departments fetched successfully",
+      message: "Departments fetched successfully",
+      status: 200,
       data: departments,
     })
-    
-  }catch(error) {
+
+  } catch (error) {
     res.status(400).json({
       message: error.message,
     });

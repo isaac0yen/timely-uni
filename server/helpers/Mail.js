@@ -1,8 +1,20 @@
+const nodemailer = require("nodemailer")
 const Logger = require("./Logger");
+
 
 const Mail = async (email, html, subject) => {
 
   try {
+
+    let transporter = nodemailer.createTransport({
+      host: 'isaac0yen.com',
+      port: 465,
+      secure: true, // Use SSL/TLS
+      auth: {
+        user: process.env.EMAIL,
+        pass: process.env.EMAIL_PASS // Use the email account's password
+      }
+    }); 
 
     const mailOptions = {
       from: process.env.EMAIL,
@@ -14,8 +26,7 @@ const Mail = async (email, html, subject) => {
     await transporter.sendMail(mailOptions, async (error, info) => {
       if (error) {
         Logger.error(
-          "There was an error sending the email on line 43 //There's some extra stuff \n\n\n" +
-          info.line,
+          "There was an error sending the email on line 43 " ,
           error,
         );
       }

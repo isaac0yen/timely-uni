@@ -27,6 +27,16 @@ export const api = {
       const response = await axios.post(`${url}/account/login`, { email, password });
       return response.data;
     },
+
+    /**
+     * @description Get account details for a user
+     * @param {string} id - User's ID
+     * @returns {Promise<Object>} Response data with user account details
+     */
+    getAccount: async (id) => {
+      const response = await axios.get(`${url}/account/get_account/${id}`);
+      return response.data;
+    },
   },
 
   user: {
@@ -184,8 +194,8 @@ export const api = {
      * @description Get information about all departments
      * @returns {Promise<Object>} Response data with list of departments
      */
-    getAllDepartments: async () => {
-      const response = await axios.get(`${url}/department/get_all_departments`);
+    getAllDepartments: async (faculty) => {
+      const response = await axios.get(`${url}/department/get_all_departments/${faculty}`);
       return response.data;
     },
   },

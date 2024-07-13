@@ -11,6 +11,16 @@ const departmentRoutes = require("./routes/department.routes");
 const facultyRoutes = require("./routes/faculty.routes");
 const timetableRoutes = require("./routes/timetable.routes");
 const accountRoutes = require("./routes/account.routes");
+const roomRoutes = require("./routes/room.routes");
+
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  next();
+});
+
+app.use(express.json());
 
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/course", courseRoutes);
@@ -18,7 +28,7 @@ app.use("/api/v1/department", departmentRoutes);
 app.use("/api/v1/faculty", facultyRoutes);
 app.use("/api/v1/room", roomRoutes);
 app.use("/api/v1/timetable", timetableRoutes);
-app.use("/api/v1/account", accountRoutesRoutes);
+app.use("/api/v1/account", accountRoutes);
 
 Logger.init();
 

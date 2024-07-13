@@ -96,6 +96,14 @@ CREATE TABLE codes (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE `course` ADD `level` INT(3) UNSIGNED NOT NULL AFTER `faculty`;
+ALTER TABLE `timetable` CHANGE `level` `level` INT(3) UNSIGNED NOT NULL;
+
+ALTER TABLE `users` ADD `status` ENUM('ACTIVE','INACTIVE') NOT NULL DEFAULT 'ACTIVE' AFTER `matric_no`;
+
+ALTER TABLE `timetable` ADD `department` INT NOT NULL AFTER `course`;
+
+ALTER TABLE `timetable` ADD CONSTRAINT `timetable_ibfk_3` FOREIGN KEY (`department`) REFERENCES `department`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 -- Insert sample data
 
 -- Users

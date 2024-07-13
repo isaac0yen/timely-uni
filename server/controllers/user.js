@@ -5,7 +5,7 @@ const { cipherPass } = require("../helpers/Crypt");
 const createAdmin = async (req, res) => {
   try {
 
-    const { name, email, password, code } = req.body;
+    const { name, email, password, code, phone } = req.body;
 
     if (!Validate.string(name)) {
       throw new Error("Name is required");
@@ -16,13 +16,13 @@ const createAdmin = async (req, res) => {
     if (!Validate.string(password)) {
       throw new Error("Password is required");
     }
-    if (!Validate.integer(code)) {
+    if (parseInt(code) < 0) {
       throw new Error("Code is invalid");
     }
 
-    const codes = await db.findMany("codes", { email });
+    const codeExists = await db.findOne("codes", { email, code: code });
 
-    if (codes.length === 0 || codes[code.length - 1].code !== code) {
+    if (!codeExists) {
       throw new Error("Code is invalid");
     }
 
@@ -32,8 +32,8 @@ const createAdmin = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      code,
       role: "admin",
+      phone: Validate.formatPhone(phone),
     };
 
     const inserted = await db.insertOne("users", admin);
@@ -45,6 +45,7 @@ const createAdmin = async (req, res) => {
     await db.deleteMany("codes", { email });
 
     res.status(200).json({
+      status: 200,
       message: "Admin created successfully",
     });
 
@@ -75,10 +76,7 @@ const createStudent = async (req, res) => {
     if (!Validate.phone(phone)) {
       throw new Error("Invalid phone number");
     }
-    if (classRep !== "true" && classRep !== "false") {
-      throw new Error("Invalid classRep value");
-    }
-    if (!Validate.integer(level)) {
+    if (parseInt(level) < 0) {
       throw new Error("Invalid level");
     }
     if (Validate.integer(faculty)) {
@@ -88,13 +86,15 @@ const createStudent = async (req, res) => {
       throw new Error("Invalid department");
     }
 
+    const hashedPassword = cipherPass(password);
+
     const student = {
       name,
       email,
-      password,
+      password: hashedPassword,
       matric_no,
       phone,
-      classRep,
+      classRep: false,
       role: "student",
       level,
     };
@@ -115,6 +115,7 @@ const createStudent = async (req, res) => {
     }
 
     res.status(200).json({
+      status: 200,
       message: "Student created successfully",
     });
 
@@ -140,10 +141,12 @@ const createLecturer = async (req, res) => {
     throw new Error("Password is required");
   }
 
+  const hashedPassword = cipherPass(password);
+
   const lecturer = {
     name,
     email,
-    password,
+    password: hashedPassword,
     role: "lecturer",
   }
 
@@ -154,6 +157,7 @@ const createLecturer = async (req, res) => {
   }
 
   res.status(200).json({
+    status: 200,
     message: "Lecturer created successfully",
   });
 
@@ -187,6 +191,7 @@ const updateAdmin = async (req, res) => {
   }
 
   res.status(200).json({
+    status: 200,
     message: "Admin updated successfully",
   });
 }
@@ -230,6 +235,7 @@ const updateStudent = async (req, res) => {
   }
 
   res.status(200).json({
+    status: 200,
     message: "Student updated successfully",
   });
 
@@ -258,6 +264,7 @@ const updateLecturer = async (req, res) => {
   }
 
   res.status(200).json({
+    status: 200,
     message: "Lecturer updated successfully",
   });
 }
@@ -277,6 +284,7 @@ const getAdmin = async (req, res) => {
     }
 
     res.status(200).json({
+      status: 200,
       message: "Admin found successfully",
       data: admin,
     });
@@ -296,6 +304,7 @@ const getAllAdmins = async (req, res) => {
     }
 
     res.status(200).json({
+      status: 200,
       message: "Admins found successfully",
       data: admins,
     });
@@ -322,6 +331,7 @@ const getStudent = async () => {
     }
 
     res.status(200).json({
+      status: 200,
       message: "Student found successfully",
       data: student,
     });
@@ -349,6 +359,7 @@ const getAllStudents = async () => {
     }
 
     res.status(200).json({
+      status: 200,
       message: "Students found successfully",
       data: admins,
     });
@@ -375,6 +386,7 @@ const getLecturer = async () => {
     }
 
     res.status(200).json({
+      status: 200,
       message: "Lecturer found successfully",
       data: lecturer,
     });
@@ -394,6 +406,7 @@ const getAllLecturers = async () => {
     }
 
     res.status(200).json({
+      status: 200,
       message: "Lecturers found successfully",
       data: lecturers,
     });

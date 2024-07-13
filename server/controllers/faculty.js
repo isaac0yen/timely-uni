@@ -32,7 +32,7 @@ const createFaculty = async (req, res) => {
   }
 }
 
-const updateFaculty = async () => {
+const updateFaculty = async (req, res) => {
   const { name, head, id } = req.body;
 
   if (!Validate.integer(id)) {
@@ -62,7 +62,8 @@ const updateFaculty = async () => {
   });
 }
 
-const getFaculty = async () => {
+const getFaculty = async (req, res) => {
+
   try {
     const { id } = req.params;
 
@@ -78,6 +79,7 @@ const getFaculty = async () => {
     res.status(200).json({
       message: "Faculty fetched successfully",
       data: faculty,
+      status:200
     });
   } catch (error) {
     res.status(400).json({
@@ -86,7 +88,7 @@ const getFaculty = async () => {
   }
 }
 
-const getAllFaculties = async () => {
+const getAllFaculties = async (req, res) => {
   try {
 
     const faculties = await db.findMany("faculty");
@@ -98,6 +100,7 @@ const getAllFaculties = async () => {
     res.status(200).json({
       message: "Faculties fetched successfully",
       data: faculties,
+      status:200
     });
 
   } catch (error) {

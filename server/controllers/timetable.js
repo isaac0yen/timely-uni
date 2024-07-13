@@ -111,9 +111,9 @@ const getTimetable = () => {
 
 const getAllTimetables = () => {
   try {
-    const { course, level } = req.params;
+    const { department, level } = req.params;
 
-    if (!Validate.integer(course)) {
+    if (!Validate.integer(department)) {
       throw new Error("Course is required");
     }
 
@@ -121,7 +121,7 @@ const getAllTimetables = () => {
       throw new Error("Level is required");
     }
 
-    const timetables = db.findMany("timetable", { course, level });
+    const timetables = db.findMany("timetable", { department, level });
 
     if (!Validate.array(timetables)) {
       throw new Error("No timetables found");
