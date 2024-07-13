@@ -4,6 +4,7 @@ const app = express();
 const Logger = require("./helpers/Logger");
 
 const { mySQLConnect } = require("./helpers/Database");
+const authMiddleware =require ("./Middleware/Auth")
 
 const userRoutes = require("./routes/user.routes");
 const courseRoutes = require("./routes/course.routes");
@@ -22,12 +23,12 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-app.use("/api/v1/user", userRoutes);
-app.use("/api/v1/course", courseRoutes);
-app.use("/api/v1/department", departmentRoutes);
-app.use("/api/v1/faculty", facultyRoutes);
-app.use("/api/v1/room", roomRoutes);
-app.use("/api/v1/timetable", timetableRoutes);
+app.use("/api/v1/user",authMiddleware, userRoutes);
+app.use("/api/v1/course",authMiddleware, courseRoutes);
+app.use("/api/v1/department", authMiddleware, departmentRoutes);
+app.use("/api/v1/faculty", authMiddleware, facultyRoutes);
+app.use("/api/v1/room", authMiddleware, roomRoutes);
+app.use("/api/v1/timetable", authMiddleware, timetableRoutes);
 app.use("/api/v1/account", accountRoutes);
 
 Logger.init();
