@@ -1,4 +1,5 @@
 const Validate = require("../helpers/Validate");
+const { db } = require("../helpers/Database")
 
 const createRoom = async (req, res) => {
   try {
@@ -7,7 +8,7 @@ const createRoom = async (req, res) => {
     if (!Validate.string(name)) {
       throw new Error("Name is required");
     }
-    if (!Validate.integer(capacity)) {
+    if (parseInt(capacity) <= 0) {
       throw new Error("Capacity is required");
     }
 
@@ -18,6 +19,7 @@ const createRoom = async (req, res) => {
     }
 
     res.status(200).json({
+      status:200,
       message: "Room created successfully",
     });
   } catch (error) {
@@ -27,14 +29,14 @@ const createRoom = async (req, res) => {
   }
 }
 
-const updateRoom = async () => {
+const updateRoom = async (req, res) => {
   try {
     const { name, capacity, id } = req.body;
 
     if (!Validate.string(name)) {
       throw new Error("Name is required");
     }
-    if (!Validate.integer(capacity)) {
+    if (parseInt(capacity) <= 0) {
       throw new Error("Capacity is required");
     }
 
@@ -46,6 +48,7 @@ const updateRoom = async () => {
     }
 
     res.status(200).json({
+      status:200,
       message: "Room updated successfully",
     });
   } catch (error) {
@@ -55,11 +58,11 @@ const updateRoom = async () => {
   }
 }
 
-const getRoom = async () => {
+const getRoom = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!Validate.integer(id)) {
+    if (parseInt(id)<= 0) {
       throw new Error("Invalid Room");
     }
 
@@ -70,6 +73,7 @@ const getRoom = async () => {
     }
 
     res.status(200).json({
+      status:200,
       message: "Room fetched successfully",
       data: room,
     });
@@ -80,17 +84,19 @@ const getRoom = async () => {
   }
 }
 
-const getAllRooms = async () => {
+const getAllRooms = async (req, res) => {
   try {
     const rooms = await db.findMany("room", {});
     if (!Validate.array(rooms)) {
       throw new Error("Rooms not found.");
     }
     res.status(200).json({
+      status:200,
       message: "Rooms fetched successfully",
       data: rooms,
     });
   } catch (error) {
+    console.log(error)
     res.status(400).json({
       message: error.message,
     });

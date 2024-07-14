@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Box,
@@ -22,17 +22,39 @@ import {
   Stepper,
   Step,
   StepLabel,
+  Avatar,
 } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import {
-  Home as HomeIcon,
+
   Menu as MenuIcon,
+  Home as HomeIcon,
+  Person as PersonIcon,
+  Book as BookIcon,
+  Schedule as ScheduleIcon,
   MeetingRoom as RoomIcon,
+  ExitToApp as LogoutIcon,
   ArrowBack as BackIcon,
   ArrowForward as ForwardIcon,
 } from '@mui/icons-material';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { api } from '../apis'; 
+import { api } from '../apis';
+import isLoggedIn from '../helpers/IsLoggedIn';
+import { DateTime } from 'luxon';
+
+const StyledDrawer = styled(Drawer)(({ theme }) => ({
+  '& .MuiDrawer-paper': {
+    backgroundColor: theme.palette.grey[900],
+    color: theme.palette.common.white,
+    width: 240,
+  },
+}));
+
+const StyledAppBar = styled(AppBar)(({ theme }) => ({
+  backgroundColor: theme.palette.grey[800],
+}));
+
 const RoomPage = () => {
   const navigate = useNavigate();
   const theme = useTheme();
@@ -47,6 +69,37 @@ const RoomPage = () => {
   const [rooms, setRooms] = useState([]);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [currentTime, setCurrentTime] = useState(DateTime.now());
+
+
+  useEffect(() => {
+    const loggedInUser = isLoggedIn();
+    if (loggedInUser === false) {
+      navigate('/');
+    }
+
+    const getUser = async () => {
+      try {
+        const response = await api.account.getAccount(loggedInUser.id);
+        setUser(response.data);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getUser();
+
+    const timer = setInterval(() => {
+      setCurrentTime(DateTime.now());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [navigate]);
 
   useEffect(() => {
     fetchRooms();
@@ -84,10 +137,9 @@ const RoomPage = () => {
     try {
       const response = await api.room.createRoom(formData);
       if (response && response.status === 200) {
-        toast.success('Room created successfully!');
-        setFormData({ name: '', capacity: '' });
+        setSuccessMessage('Room created successfully!');
         fetchRooms();
-        setActiveStep(0);
+        setActiveStep(1);
       } else {
         toast.error('Failed to create room. Please try again.');
       }
@@ -100,6 +152,19 @@ const RoomPage = () => {
   };
 
   const steps = ['Room Details', 'Confirmation'];
+
+  const handleNext = () => {
+    if (formData.name.trim() === '' || formData.capacity.trim() === '') {
+      setError('Please fill in all required fields.');
+    } else {
+      setError('');
+      setActiveStep((prevActiveStep) => prevActiveStep + 1);
+    }
+  };
+
+  const handleBack = () => {
+    setActiveStep((prevActiveStep) => prevActiveStep - 1);
+  };
 
   const getStepContent = (step) => {
     switch (step) {
@@ -125,12 +190,22 @@ const RoomPage = () => {
               required
               margin="normal"
             />
+            {error && (
+              <Typography color="error" variant="body2">
+                {error}
+              </Typography>
+            )}
           </>
         );
       case 1:
         return (
           <>
             <Typography variant="h6">Review and Confirm</Typography>
+            {successMessage && (
+              <Typography variant="body1" color="success.main">
+                {successMessage}
+              </Typography>
+            )}
             <Typography variant="body1">
               Please review the information you've entered.
             </Typography>
@@ -143,17 +218,45 @@ const RoomPage = () => {
     }
   };
 
-  const handleNext = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep + 1);
-  };
-
-  const handleBack = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep - 1);
-  };
+  const drawerContent = (
+    <Box sx={{ p: 2 }}>
+      <Avatar
+        sx={{ width: 64, height: 64, mb: 2, mx: 'auto' }}
+        alt={user?.name}
+        src="/path-to-user-image.jpg"
+      />
+      <Typography variant="h6" align="center" gutterBottom>
+        {user?.name}
+      </Typography>
+      <Typography variant="body2" align="center" gutterBottom>
+        {user?.email}
+      </Typography>
+      <List>
+        {[
+          { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard' },
+          { text: 'Profile', icon: <PersonIcon />, path: '/profile' },
+          { text: 'Courses', icon: <BookIcon />, path: '/course' },
+          { text: 'Timetable', icon: <ScheduleIcon />, path: '/timetable' },
+          { text: 'Rooms', icon: <RoomIcon />, path: '/rooms' },
+        ].map((item) => (
+          <ListItem button key={item.text} component={Link} to={item.path}>
+            <ListItemIcon sx={{ color: 'inherit' }}>{item.icon}</ListItemIcon>
+            <ListItemText primary={item.text} />
+          </ListItem>
+        ))}
+        <ListItem button onClick={() => navigate('/logout')}>
+          <ListItemIcon sx={{ color: 'inherit' }}>
+            <LogoutIcon />
+          </ListItemIcon>
+          <ListItemText primary="Logout" />
+        </ListItem>
+      </List>
+    </Box>
+  );
 
   return (
     <Box>
-      <AppBar position="static">
+      <StyledAppBar position="static">
         <Toolbar>
           <IconButton
             edge="start"
@@ -168,24 +271,16 @@ const RoomPage = () => {
             Room Management
           </Typography>
         </Toolbar>
-      </AppBar>
+      </StyledAppBar>
 
-      <Drawer anchor="left" open={isDrawerOpen} onClose={handleDrawerToggle}>
-        <List>
-          <ListItem button onClick={() => navigate('/')}>
-            <ListItemIcon>
-              <HomeIcon />
-            </ListItemIcon>
-            <ListItemText primary="Home" />
-          </ListItem>
-          <ListItem button onClick={() => navigate('/rooms')}>
-            <ListItemIcon>
-              <RoomIcon />
-            </ListItemIcon>
-            <ListItemText primary="Rooms" />
-          </ListItem>
-        </List>
-      </Drawer>
+      <StyledDrawer
+        anchor="left"
+        open={isDrawerOpen}
+        onClose={handleDrawerToggle}
+        variant={isMobile ? 'temporary' : 'permanent'}
+      >
+        {drawerContent}
+      </StyledDrawer>
 
       <Container maxWidth="sm">
         <Paper elevation={3} sx={{ padding: 3, mt: 3 }}>

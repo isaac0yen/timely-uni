@@ -129,7 +129,7 @@ const Dashboard = () => {
           { text: 'Profile', icon: <PersonIcon />, path: '/profile' },
           { text: 'Courses', icon: <BookIcon />, path: '/course' },
           { text: 'Timetable', icon: <ScheduleIcon />, path: '/timetable' },
-          { text: 'Rooms', icon: <RoomIcon />, path: '/room' },
+          { text: 'Rooms', icon: <RoomIcon />, path: '/rooms' },
         ].map((item) => (
           <ListItem button key={item.text} component={Link} to={item.path}>
             <ListItemIcon sx={{ color: 'inherit' }}>{item.icon}</ListItemIcon>
