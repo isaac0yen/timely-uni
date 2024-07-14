@@ -109,10 +109,17 @@ const getCourse = async (req, res) => {
 }
 
 const getAllCourses = async (req, res) => {
-  const { department } = req.params;
+  const { id } = req.params;
+
+  const department = await db.findOne("user_department", { user_id: id })
+
+  if (parseInt(department.department_id) <= 0) {
+    throw new Error("Course is required");
+  }
+
 
   try {
-    const courses = await db.findMany("course", { department });
+    const courses = await db.findMany("course", { department: department.department_id });
 
     if (!Validate.array(courses)) {
       throw new Error("Invalid courses");

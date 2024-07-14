@@ -9,6 +9,6 @@ router.patch("/update_timetable", updateTimetable);
 
 
 router.get("/get_timetable/:id", getTimetable);
-router.get("/get_all_timetables/:department/:level", getAllTimetables);
+router.get("/get_all_timetables/:id/:level", getAllTimetables);
 
 module.exports = router;

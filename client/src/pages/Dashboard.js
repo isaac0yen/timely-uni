@@ -126,7 +126,7 @@ const Dashboard = () => {
       <List>
         {[
           { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard' },
-          { text: 'Profile', icon: <PersonIcon />, path: '/profile' },
+          
           { text: 'Courses', icon: <BookIcon />, path: '/course' },
           { text: 'Timetable', icon: <ScheduleIcon />, path: '/timetable' },
           { text: 'Rooms', icon: <RoomIcon />, path: '/rooms' },

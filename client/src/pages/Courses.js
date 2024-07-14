@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import {
   AppBar, Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, DialogTitle,
   Drawer, Fab, IconButton, List, ListItem, ListItemIcon, ListItemText, Menu, MenuItem,
-  TextField, Toolbar, Typography, useTheme, styled, Select, InputLabel, FormControl
+  TextField, Toolbar, Typography, useTheme, styled, Select, InputLabel, FormControl,
+  Avatar
 } from '@mui/material';
 import {
-  Menu as MenuIcon, Home as HomeIcon, Person as PersonIcon, Book as BookIcon,
+  Menu as MenuIcon, Home as HomeIcon, Book as BookIcon,
   Schedule as ScheduleIcon, MeetingRoom as RoomIcon, ExitToApp as LogoutIcon,
   Add as AddIcon, MoreVert as MoreVertIcon, ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
@@ -66,14 +67,19 @@ function Courses() {
 
 
   useEffect(() => {
-    const loggedInUser = isLoggedIn();
-    if (loggedInUser === false) {
-      navigate('/');
-    } else {
-      setUser(loggedInUser);
-      fetchFaculties();
+    const process = async () => {
+      const loggedInUser = isLoggedIn();
+      if (loggedInUser === false) {
+        navigate('/');
+      } else {
+        const userResponse = await api.account.getAccount(isLoggedIn().id);
+        setUser(userResponse.data);
+        fetchFaculties();
+      }
     }
+    process();
   }, [navigate]);
+
 
   const fetchFaculties = async () => {
     try {
@@ -292,20 +298,36 @@ function Courses() {
 
   const drawerContent = (
     <Box sx={{ p: 2 }}>
+      <Avatar
+        sx={{ width: 64, height: 64, mb: 2, mx: 'auto' }}
+        alt={user?.name}
+        src="/path-to-user-image.jpg"
+      />
+      <Typography variant="h6" align="center" gutterBottom>
+        {user?.name}
+      </Typography>
+      <Typography variant="body2" align="center" gutterBottom>
+        {user?.email}
+      </Typography>
       <List>
         {[
           { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard' },
-          { text: 'Profile', icon: <PersonIcon />, path: '/profile' },
+
           { text: 'Courses', icon: <BookIcon />, path: '/course' },
           { text: 'Timetable', icon: <ScheduleIcon />, path: '/timetable' },
           { text: 'Rooms', icon: <RoomIcon />, path: '/rooms' },
-          { text: 'Logout', icon: <LogoutIcon />, path: '/logout' },
         ].map((item) => (
-          <ListItem button key={item.text} component={Link} to={item.path}>
+          <ListItem button key={item.text} component={Link} to={item.path} onClick={() => navigate(item.path)}>
             <ListItemIcon sx={{ color: 'inherit' }}>{item.icon}</ListItemIcon>
             <ListItemText primary={item.text} />
           </ListItem>
         ))}
+        <ListItem button onClick={() => navigate('/logout')}>
+          <ListItemIcon sx={{ color: 'inherit' }}>
+            <LogoutIcon />
+          </ListItemIcon>
+          <ListItemText primary="Logout" />
+        </ListItem>
       </List>
     </Box>
   );

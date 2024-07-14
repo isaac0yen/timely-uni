@@ -1,14 +1,14 @@
 const Validate = require("../helpers/Validate");
-
-const createTimetable = (req, res) => {
+const { db } = require("../helpers/Database")
+const createTimetable = async (req, res) => {
   try {
     const { id: created_by } = req.context;
-    const { label, course, time_start, time_end, date, level } = req.body;
+    const { label, course, time_start, time_end, date, level, room } = req.body;
 
     if (!Validate.string(label)) {
       throw new Error("Label is required");
     }
-    if (!Validate.integer(course)) {
+    if (parseInt(course) <= 0) {
       throw new Error("Course is required");
     }
     if (!Validate.time(time_start)) {
@@ -17,14 +17,21 @@ const createTimetable = (req, res) => {
     if (!Validate.time(time_end)) {
       throw new Error("Time end is required");
     }
-    if (Validate.date(date)) {
+    if (!Validate.date(date)) {
+      console.log(date)
       throw new Error("Date is required");
     }
-    if (!Validate.integer(level)) {
+    if (parseInt(level) <= 0) {
       throw new Error("Level is required");
     }
+    if (parseInt(room) <= 0) {
+      throw new Error("room is required");
+    }
+    room
 
-    const inserted = db.insertOne("timetable", { label, course, created_by, time_start, time_end, date, level });
+    const dept = await db.findOne("user_department", { user_id: created_by });
+
+    const inserted = db.insertOne("timetable", { label, course, created_by, time_start, time_end, date, level, department: dept.department_id, room });
 
     if (inserted < 1) {
       throw new Error("Sorry, an error occured.");
@@ -35,13 +42,15 @@ const createTimetable = (req, res) => {
     });
 
   } catch (error) {
+    console.log(error)
+
     res.status(400).json({
       message: error.message,
     });
   }
 }
 
-const updateTimetable = () => {
+const updateTimetable = (req, res) => {
   try {
     const { label, course, time_start, time_end, date, level, id } = req.body;
 
@@ -82,7 +91,7 @@ const updateTimetable = () => {
   }
 }
 
-const getTimetable = () => {
+const getTimetable = (req, res) => {
   try {
 
     const { id } = req.params;
@@ -109,19 +118,25 @@ const getTimetable = () => {
   }
 }
 
-const getAllTimetables = () => {
+const getAllTimetables = async (req, res) => {
   try {
-    const { department, level } = req.params;
+    const { id, level } = req.params;
 
-    if (!Validate.integer(department)) {
+    if (parseInt(id) <= 0) {
       throw new Error("Course is required");
     }
 
-    if (!Validate.integer(level)) {
+    if (parseInt(level) <= 0) {
       throw new Error("Level is required");
     }
 
-    const timetables = db.findMany("timetable", { department, level });
+    const department = await db.findOne("user_department", { user_id: id })
+
+    if (parseInt(department.department_id) <= 0) {
+      throw new Error("Course is required");
+    }
+
+    const timetables = await db.findMany("timetable", { department: department.department_id, level });
 
     if (!Validate.array(timetables)) {
       throw new Error("No timetables found");
@@ -132,6 +147,7 @@ const getAllTimetables = () => {
       data: timetables,
     });
   } catch (error) {
+    console.log(error);
     res.status(400).json({
       message: error.message,
     });

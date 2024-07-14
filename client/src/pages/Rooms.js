@@ -41,7 +41,6 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { api } from '../apis';
 import isLoggedIn from '../helpers/IsLoggedIn';
-import { DateTime } from 'luxon';
 
 const StyledDrawer = styled(Drawer)(({ theme }) => ({
   '& .MuiDrawer-paper': {
@@ -71,11 +70,6 @@ const RoomPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [user, setUser] = useState(null);
-<<<<<<< Updated upstream
-  const [loading, setLoading] = useState(true);
-  const [currentTime, setCurrentTime] = useState(DateTime.now());
-=======
->>>>>>> Stashed changes
 
 
   useEffect(() => {
@@ -90,24 +84,11 @@ const RoomPage = () => {
         setUser(response.data);
       } catch (error) {
         console.error('Error fetching user data:', error);
-<<<<<<< Updated upstream
       } finally {
-        setLoading(false);
-=======
->>>>>>> Stashed changes
       }
     };
 
     getUser();
-
-<<<<<<< Updated upstream
-    const timer = setInterval(() => {
-      setCurrentTime(DateTime.now());
-    }, 1000);
-
-    return () => clearInterval(timer);
-=======
->>>>>>> Stashed changes
   }, [navigate]);
 
   useEffect(() => {
@@ -117,9 +98,7 @@ const RoomPage = () => {
   const fetchRooms = async () => {
     try {
       const response = await api.room.getAllRooms();
-      if (response.status === 200) {
-        setRooms(response.data);
-      }
+      setRooms(response.data);
     } catch (error) {
       console.error('Error fetching rooms:', error);
       toast.error('Failed to fetch rooms. Please try again.');
@@ -243,7 +222,7 @@ const RoomPage = () => {
       <List>
         {[
           { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard' },
-          { text: 'Profile', icon: <PersonIcon />, path: '/profile' },
+          
           { text: 'Courses', icon: <BookIcon />, path: '/course' },
           { text: 'Timetable', icon: <ScheduleIcon />, path: '/timetable' },
           { text: 'Rooms', icon: <RoomIcon />, path: '/rooms' },
