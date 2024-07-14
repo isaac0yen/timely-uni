@@ -40,7 +40,9 @@ import {
 } from '@mui/icons-material';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { api } from '../apis';  // Ensure this import is correct and points to the right file
+import { api } from '../apis'; 
+import Admin from './Register/Admin';
+
 
 const RegisterPage = () => {
   const { role } = useParams();
@@ -380,6 +382,10 @@ const RegisterPage = () => {
   const handleBack = () => {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
+
+  if (role === "admin") {
+    return <Admin />
+  }
 
   return (
     <Box>
