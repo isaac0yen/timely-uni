@@ -8,6 +8,6 @@ router.post("/create_course", createCourse);
 router.patch("/update_course", updateCourse);
 
 router.get("/get_course/:id", getCourse);
-router.get("/get_all_courses", getAllCourses);
+router.get("/get_all_courses/:department", getAllCourses);
 
 module.exports = router;

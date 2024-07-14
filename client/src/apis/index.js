@@ -277,10 +277,11 @@ export const api = {
 
     /**
      * @description Get information about all courses
+     * @param {number} id - Course ID
      * @returns {Promise<Object>} Response data with list of courses
      */
-    getAllCourses: async () => {
-      const response = await axios.get(`${url}/course/get_all_courses`);
+    getAllCourses: async (id) => {
+      const response = await axios.get(`${url}/course/get_all_courses/${id}`);
       return response.data;
     },
   },

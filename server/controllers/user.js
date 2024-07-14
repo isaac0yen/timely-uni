@@ -184,7 +184,7 @@ const updateAdmin = async (req, res) => {
     email,
   }
 
-  const updated = await db.updateOne("user", admin, { id, status: "admin" });
+  const updated = await db.updateOne("users", admin, { id, status: "admin" });
 
   if (updated < 1) {
     throw new Error("Sorry, an error occured.");
@@ -228,7 +228,7 @@ const updateStudent = async (req, res) => {
     level
   };
 
-  const updated = await db.updateOne("user", student, { id, status: "student" });
+  const updated = await db.updateOne("users", student, { id, status: "student" });
 
   if (updated < 1) {
     throw new Error("Sorry, an error occured")
@@ -257,7 +257,7 @@ const updateLecturer = async (req, res) => {
     email,
   }
 
-  const updated = await db.updateOne("user", lecturer, { id, status: "lecturer" });
+  const updated = await db.updateOne("users", lecturer, { id, status: "lecturer" });
 
   if (updated < 1) {
     throw new Error("Sorry, an error occured.")
@@ -277,7 +277,7 @@ const getAdmin = async (req, res) => {
       throw new Error("Invalid admin");
     }
 
-    const admin = await db.findOne("user", { id, role: "admin" });
+    const admin = await db.findOne("users", { id, role: "admin" });
 
     if (!Validate.object(admin)) {
       throw new Error("Couldn't find admin");
@@ -298,7 +298,7 @@ const getAdmin = async (req, res) => {
 
 const getAllAdmins = async (req, res) => {
   try {
-    const admins = await db.findMany("user", { role: "admin" });
+    const admins = await db.findMany("users", { role: "admin" });
     if (!Validate.array(admins)) {
       throw new Error("Couldn't find admins");
     }
@@ -316,7 +316,7 @@ const getAllAdmins = async (req, res) => {
   }
 }
 
-const getStudent = async () => {
+const getStudent = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -324,7 +324,7 @@ const getStudent = async () => {
       throw new Error("Invalid student");
     }
 
-    const student = await db.findOne("user", { id, role: "student" });
+    const student = await db.findOne("users", { id, role: "student" });
 
     if (!Validate.object(student)) {
       throw new Error("Couldn't find student");
@@ -343,7 +343,7 @@ const getStudent = async () => {
   }
 }
 
-const getAllStudents = async () => {
+const getAllStudents = async (req, res) => {
   try {
 
     const { department } = req.params;
@@ -352,7 +352,7 @@ const getAllStudents = async () => {
       throw new Error("Invalid department");
     }
 
-    const students = await db.findMany("user", { role: "student", department });
+    const students = await db.findMany("users", { role: "student", department });
 
     if (!Validate.array(students)) {
       throw new Error("Couldn't find students");
@@ -371,7 +371,7 @@ const getAllStudents = async () => {
   }
 }
 
-const getLecturer = async () => {
+const getLecturer = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -379,7 +379,7 @@ const getLecturer = async () => {
       throw new Error("Invalid lecturer");
     }
 
-    const lecturer = await db.findOne("user", { id, role: "lecturer" });
+    const lecturer = await db.findOne("users", { id, role: "lecturer" });
 
     if (!Validate.object(lecturer)) {
       throw new Error("Couldn't find lecturer");
@@ -398,9 +398,9 @@ const getLecturer = async () => {
   }
 }
 
-const getAllLecturers = async () => {
+const getAllLecturers = async (req, res) => {
   try {
-    const lecturers = await db.findMany("user", { role: "lecturer" });
+    const lecturers = await db.findMany("users", { role: "lecturer" });
     if (!Validate.array(lecturers)) {
       throw new Error("Couldn't find lecturers");
     }
@@ -412,6 +412,7 @@ const getAllLecturers = async () => {
     });
 
   } catch (error) {
+    console.log(error)
     res.status(400).json({
       message: error.message,
     });

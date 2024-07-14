@@ -112,8 +112,6 @@ const getAccount = async (req, res) => {
 
     const [result] = await db.executeDirect(query, [today, id]);
 
-    console.log(result);
-
     if (!result.length) {
       throw new Error("User does not exist.");
     }

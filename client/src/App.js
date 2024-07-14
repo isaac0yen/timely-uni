@@ -6,6 +6,7 @@ import EmailVerificationPage from './pages/EmailVerification';
 import RegisterPage from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import ErrorPage from './pages/Error';
+import Courses from './pages/Courses';
 
 const App = () => {
   return (
@@ -14,6 +15,7 @@ const App = () => {
         <Route path="/" element={<LoginPage />} />
         <Route path="/select-role/" element={<SelectRole />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/course" element={<Courses />} />
         <Route path="/verify-email" element={<EmailVerificationPage />} />
         <Route path="/register/:role" element={<RegisterPage />} />
         <Route path="*" element={<ErrorPage />} />

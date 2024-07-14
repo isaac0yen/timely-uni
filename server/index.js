@@ -23,13 +23,14 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-app.use("/api/v1/user",authMiddleware, userRoutes);
-app.use("/api/v1/course",authMiddleware, courseRoutes);
-app.use("/api/v1/department", authMiddleware, departmentRoutes);
-app.use("/api/v1/faculty", authMiddleware, facultyRoutes);
-app.use("/api/v1/room", authMiddleware, roomRoutes);
-app.use("/api/v1/timetable", authMiddleware, timetableRoutes);
+app.use("/api/v1/user",/* authMiddleware, */ userRoutes);
+app.use("/api/v1/course",/* authMiddleware, */ courseRoutes);
+app.use("/api/v1/department", /* authMiddleware, */ departmentRoutes);
+app.use("/api/v1/faculty", /* authMiddleware, */ facultyRoutes);
+app.use("/api/v1/room", /* authMiddleware, */ roomRoutes);
+app.use("/api/v1/timetable", /* authMiddleware, */ timetableRoutes);
 app.use("/api/v1/account", accountRoutes);
+
 
 Logger.init();
 

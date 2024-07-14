@@ -82,11 +82,52 @@ const updateCourse = () => {
 
 }
 
-const getCourse = () => {
-  const { id } = req.params;
+const getCourse = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!Validate.integer(id)) {
+      throw new Error("Invalid ID");
+    }
+
+    const course = await db.findOne("course", { id });
+
+    if (!Validate.object(course)) {
+      throw new Error("Course not found");
+    }
+
+    res.status(200).json({
+      message: "Course fetched successfully",
+      status: 200,
+      data: course,
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: error.message,
+    });
+  }
 }
 
-const getAllCourses = () => {
+const getAllCourses = async (req, res) => {
+  const { department } = req.params;
+
+  try {
+    const courses = await db.findMany("course", { department });
+
+    if (!Validate.array(courses)) {
+      throw new Error("Invalid courses");
+    }
+
+    res.status(200).json({
+      message: "Courses fetched successfully",
+      status: 200,
+      data: courses,
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: error.message,
+    });
+  }
 }
 
 module.exports = {
