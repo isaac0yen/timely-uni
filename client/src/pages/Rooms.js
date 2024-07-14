@@ -71,8 +71,11 @@ const RoomPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [user, setUser] = useState(null);
+<<<<<<< Updated upstream
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(DateTime.now());
+=======
+>>>>>>> Stashed changes
 
 
   useEffect(() => {
@@ -87,18 +90,24 @@ const RoomPage = () => {
         setUser(response.data);
       } catch (error) {
         console.error('Error fetching user data:', error);
+<<<<<<< Updated upstream
       } finally {
         setLoading(false);
+=======
+>>>>>>> Stashed changes
       }
     };
 
     getUser();
 
+<<<<<<< Updated upstream
     const timer = setInterval(() => {
       setCurrentTime(DateTime.now());
     }, 1000);
 
     return () => clearInterval(timer);
+=======
+>>>>>>> Stashed changes
   }, [navigate]);
 
   useEffect(() => {

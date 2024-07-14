@@ -1,343 +1,159 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { DateTime } from 'luxon';
 import {
   Box,
+  Grid,
   Typography,
-  TextField,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
+  Modal,
   AppBar,
   Toolbar,
-  IconButton,
-  Drawer,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Grid,
+  IconButton
 } from '@mui/material';
-import {
-  Home as HomeIcon,
-  Menu as MenuIcon,
-  Event as EventIcon,
-} from '@mui/icons-material';
-import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
-import { toast, ToastContainer } from 'react-toastify';
+import { Menu as MenuIcon } from '@mui/icons-material';
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { api } from '../apis';
+import { useNavigate } from 'react-router-dom';
+import isLoggedIn from '../helpers/IsLoggedIn';
 
-const Timetable = () => {
-  const navigate = useNavigate();
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [events, setEvents] = useState([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+const Table = ({ events }) => {
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const [formData, setFormData] = useState({
-    label: '',
-    department: '',
-    time_start: '',
-    time_end: '',
-    date: '',
-    level: '',
-  });
-  const [departments, setDepartments] = useState([]);
-  const [levels] = useState([100, 200, 300, 400, 500]);
-  const [selectedDepartment, setSelectedDepartment] = useState('');
-  const [selectedLevel, setSelectedLevel] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const fetchTimetables = useCallback(async () => {
-    try {
-      if (!selectedDepartment || !selectedLevel) {
-        // Don't fetch if department or level is not selected
-        return;
-      }
-      const response = await api.timetable.getAllTimetables(selectedDepartment, selectedLevel);
-      if (response.status === 200) {
-        const formattedEvents = response.data.map(timetable => ({
-          id: timetable.id,
-          title: timetable.label,
-          start: `${timetable.date}T${timetable.time_start}`,
-          end: `${timetable.date}T${timetable.time_end}`,
-          extendedProps: {
-            department: timetable.department,
-            level: timetable.level,
-          },
-        }));
-        setEvents(formattedEvents);
-      }
-    } catch (error) {
-      console.error('Error fetching timetables:', error);
-      toast.error('Failed to fetch timetables. Please try again.');
-    }
-  }, [selectedDepartment, selectedLevel]);
+  const today = DateTime.local();
+  const startOfWeek = today.startOf('week');
 
-  useEffect(() => {
-    fetchTimetables();
-    // Fetch departments
-    const fetchDepartments = async () => {
-      try {
-        const response = await api.department.getAllDepartments();
-        if (response.status === 200) {
-          setDepartments(response.data);
-        }
-      } catch (error) {
-        console.error('Error fetching departments:', error);
-        toast.error('Failed to fetch departments. Please try again.');
-      }
-    };
-    fetchDepartments();
-  }, [fetchTimetables]);
+  const weekDays = [];
+  for (let i = 0; i <= 6; i++) {
+    weekDays.push(startOfWeek.plus({ days: i }));
+  }
 
-  const handleDrawerToggle = () => {
-    setIsDrawerOpen(!isDrawerOpen);
+  const handleEventClick = (event) => {
+    setSelectedEvent(event);
+    setIsModalOpen(true);
   };
 
-  const handleDateClick = (arg) => {
-    setSelectedEvent(null);
-    setFormData({
-      label: '',
-      department: selectedDepartment,
-      time_start: arg.date.toTimeString().slice(0, 5),
-      time_end: new Date(arg.date.getTime() + 60*60000).toTimeString().slice(0, 5),
-      date: arg.dateStr,
-      level: selectedLevel,
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleEventClick = (arg) => {
-    setSelectedEvent(arg.event);
-    setFormData({
-      label: arg.event.title,
-      department: arg.event.extendedProps.department,
-      time_start: arg.event.start.toTimeString().slice(0, 5),
-      time_end: arg.event.end.toTimeString().slice(0, 5),
-      date: arg.event.startStr.slice(0, 10),
-      level: arg.event.extendedProps.level,
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async () => {
-    try {
-      if (selectedEvent) {
-        await api.timetable.updateTimetable({ ...formData, id: selectedEvent.id });
-        toast.success('Timetable updated successfully');
-      } else {
-        await api.timetable.createTimetable(formData);
-        toast.success('Timetable created successfully');
-      }
-      setIsDialogOpen(false);
-      fetchTimetables();
-    } catch (error) {
-      console.error('Error saving timetable:', error);
-      toast.error(error.response?.data?.message || 'An error occurred while saving the timetable');
-    }
-  };
-
-  const handleDepartmentChange = (event) => {
-    setSelectedDepartment(event.target.value);
-  };
-
-  const handleLevelChange = (event) => {
-    setSelectedLevel(event.target.value);
+  const showToast = (message) => {
+    toast(message);
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+    <Box>
       <AppBar position="static">
         <Toolbar>
-          <IconButton
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2 }}
-          >
+          <IconButton edge="start" color="inherit" aria-label="menu" sx={{ mr: 2 }}>
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Timetable Management
+            Timetable
           </Typography>
         </Toolbar>
       </AppBar>
 
-      <Drawer anchor="left" open={isDrawerOpen} onClose={handleDrawerToggle}>
-        <List>
-          <ListItem button onClick={() => navigate('/')}>
-            <ListItemIcon>
-              <HomeIcon />
-            </ListItemIcon>
-            <ListItemText primary="Home" />
-          </ListItem>
-          <ListItem button onClick={() => navigate('/timetable')}>
-            <ListItemIcon>
-              <EventIcon />
-            </ListItemIcon>
-            <ListItemText primary="Timetable" />
-          </ListItem>
-        </List>
-      </Drawer>
-
-      <Box sx={{ flexGrow: 1, p: 3 }}>
-        <Grid container spacing={2} sx={{ mb: 2 }}>
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <InputLabel>Department</InputLabel>
-              <Select
-                value={selectedDepartment}
-                onChange={handleDepartmentChange}
-              >
-                {departments.map((department) => (
-                  <MenuItem key={department.id} value={department.id}>{department.name}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <InputLabel>Level</InputLabel>
-              <Select
-                value={selectedLevel}
-                onChange={handleLevelChange}
-              >
-                {levels.map((level) => (
-                  <MenuItem key={level} value={level}>{level}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-
-        <FullCalendar
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          headerToolbar={{
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-          }}
-          initialView="timeGridWeek"
-          editable={true}
-          selectable={true}
-          selectMirror={true}
-          dayMaxEvents={true}
-          weekends={true}
-          events={events}
-          dateClick={handleDateClick}
-          eventClick={handleEventClick}
-          height="auto"
-          contentHeight="auto"
-          aspectRatio={1.8}
-          expandRows={true}
-          stickyHeaderDates={true}
-          nowIndicator={true}
-          slotEventOverlap={false}
-          allDaySlot={false}
-          slotMinTime="08:00:00"
-          slotMaxTime="18:00:00"
-          slotDuration="00:30:00"
-          slotLabelInterval="01:00"
-        />
-      </Box>
-
-      <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)}>
-        <DialogTitle>{selectedEvent ? 'Edit Timetable Entry' : 'Add Timetable Entry'}</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            name="label"
-            label="Label"
-            type="text"
-            fullWidth
-            value={formData.label}
-            onChange={handleInputChange}
-          />
-          <FormControl fullWidth margin="dense">
-            <InputLabel>Department</InputLabel>
-            <Select
-              name="department"
-              value={formData.department}
-              onChange={handleInputChange}
+      <Grid container spacing={2} sx={{ mt: 2 }}>
+        {weekDays.map((day) => (
+          <Grid item xs={12} sm={6} md={3} lg={1.7} key={day.toISO()}>
+            <Box
+              sx={{
+                border: '1px solid #ccc',
+                p: 2,
+                height: '100%',
+                minHeight: '200px'
+              }}
             >
-              {departments.map((department) => (
-                <MenuItem key={department.id} value={department.id}>{department.name}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <TextField
-            margin="dense"
-            name="time_start"
-            label="Start Time"
-            type="time"
-            fullWidth
-            value={formData.time_start}
-            onChange={handleInputChange}
-            InputLabelProps={{
-              shrink: true,
-            }}
-          />
-          <TextField
-            margin="dense"
-            name="time_end"
-            label="End Time"
-            type="time"
-            fullWidth
-            value={formData.time_end}
-            onChange={handleInputChange}
-            InputLabelProps={{
-              shrink: true,
-            }}
-          />
-          <TextField
-            margin="dense"
-            name="date"
-            label="Date"
-            type="date"
-            fullWidth
-            value={formData.date}
-            onChange={handleInputChange}
-            InputLabelProps={{
-              shrink: true,
-            }}
-          />
-          <FormControl fullWidth margin="dense">
-            <InputLabel>Level</InputLabel>
-            <Select
-              name="level"
-              value={formData.level}
-              onChange={handleInputChange}
-            >
-              {levels.map((level) => (
-                <MenuItem key={level} value={level}>{level}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleSubmit}>Save</Button>
-        </DialogActions>
-      </Dialog>
+              <Typography variant="subtitle1">{day.weekdayLong}</Typography>
+              <Typography variant="h6">{day.toFormat('d')}</Typography>
+              {events
+                .filter(event => DateTime.fromISO(event.date).hasSame(day, 'day'))
+                .map((event, index) => (
+                  <Box
+                    key={index}
+                    onClick={() => handleEventClick(event)}
+                    sx={{
+                      bgcolor: 'primary.main',
+                      color: 'white',
+                      p: 1,
+                      mt: 1,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Typography variant="body2">{event.label || 'Untitled Event'}</Typography>
+                    <Typography variant="caption">
+                      {event.time_start ? DateTime.fromISO(event.time_start).toFormat('HH:mm') : 'N/A'} -
+                      {event.time_end ? DateTime.fromISO(event.time_end).toFormat('HH:mm') : 'N/A'}
+                    </Typography>
+                  </Box>
+                ))}
+              {events.filter(event => DateTime.fromISO(event.date).hasSame(day, 'day')).length === 0 && (
+                <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
+                  No events
+                </Typography>
+              )}
+            </Box>
+          </Grid>
+        ))}
+      </Grid>
 
+      <Modal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        aria-labelledby="event-modal-title"
+        aria-describedby="event-modal-description"
+      >
+        <Box sx={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 400,
+          bgcolor: 'background.paper',
+          boxShadow: 24,
+          p: 4,
+        }}>
+          {selectedEvent && (
+            <>
+              <Typography id="event-modal-title" variant="h6" component="h2">
+                {selectedEvent.label || 'Untitled Event'}
+              </Typography>
+              <Typography id="event-modal-description" sx={{ mt: 2 }}>
+                Date: {selectedEvent.date ? DateTime.fromISO(selectedEvent.date).toFormat('dd LLL yyyy') : 'N/A'}
+                <br />
+                Time: {selectedEvent.time_start ? DateTime.fromISO(selectedEvent.time_start).toFormat('HH:mm') : 'N/A'} -
+                {selectedEvent.time_end ? DateTime.fromISO(selectedEvent.time_end).toFormat('HH:mm') : 'N/A'}
+              </Typography>
+            </>
+          )}
+        </Box>
+      </Modal>
       <ToastContainer />
     </Box>
   );
+};
+
+const Timetable = () => {
+
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const loggedInUser = isLoggedIn();
+    if (loggedInUser === false) {
+      navigate('/');
+    }
+
+    const getUser = async () => {
+      try {
+        const response = await api.account.getAccount(loggedInUser.id);
+        setUser(response.data);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    getUser();
+
+  }, [navigate]);
+
 };
 
 export default Timetable;
