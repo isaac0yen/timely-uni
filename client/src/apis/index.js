@@ -364,8 +364,8 @@ export const api = {
      * @param {number} level - Level
      * @returns {Promise<Object>} Response data with list of timetable entries
      */
-    getAllTimetables: async (course, level) => {
-      const response = await axios.get(`${url}/timetable/get_all_timetables`, { params: { course, level } });
+    getAllTimetables: async (department, level) => {
+      const response = await axios.get(`${url}/timetable/get_all_timetables`, { params: { department, level } });
       return response.data;
     },
   },

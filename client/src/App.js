@@ -7,7 +7,8 @@ import RegisterPage from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import ErrorPage from './pages/Error';
 import Courses from './pages/Courses';
-import Room from './pages/Rooms'
+import RoomPage from './pages/Rooms'
+import Timetable from './pages/Timetable';
 
 const App = () => {
   return (
@@ -19,7 +20,8 @@ const App = () => {
         <Route path="/course" element={<Courses />} />
         <Route path="/verify-email" element={<EmailVerificationPage />} />
         <Route path="/register/:role" element={<RegisterPage />} />
-        <Route path="/rooms" element={<Room />} />
+        <Route path="/timetable" element={<Timetable />} />
+        <Route path="/rooms" element={<RoomPage/>} />
         <Route path="*" element={<ErrorPage />} />
       </Routes>
     </div>
