@@ -297,7 +297,7 @@ function Courses() {
   };
 
   const drawerContent = (
-    <Box sx={{ p: 2 }}>
+        <Box sx={{ p: 2 }}>
       <Avatar
         sx={{ width: 64, height: 64, mb: 2, mx: 'auto' }}
         alt={user?.name}
@@ -312,17 +312,16 @@ function Courses() {
       <List>
         {[
           { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard' },
-
           { text: 'Courses', icon: <BookIcon />, path: '/course' },
-          { text: 'Timetable', icon: <ScheduleIcon />, path: '/timetable' },
           { text: 'Rooms', icon: <RoomIcon />, path: '/rooms' },
-        ].map((item) => (
+          { text: 'Timetable', icon: <ScheduleIcon />, path: '/timetable' },
+        ].filter(item => user?.role !== 'student' || (item.text !== 'Courses' && item.text !== 'Rooms')).map((item) => (
           <ListItem button key={item.text} component={Link} to={item.path} onClick={() => navigate(item.path)}>
             <ListItemIcon sx={{ color: 'inherit' }}>{item.icon}</ListItemIcon>
             <ListItemText primary={item.text} />
           </ListItem>
         ))}
-        <ListItem button onClick={() => navigate('/logout')}>
+        <ListItem button onClick={() => navigate('/')}>
           <ListItemIcon sx={{ color: 'inherit' }}>
             <LogoutIcon />
           </ListItemIcon>
