@@ -5,7 +5,6 @@ import {
   Box,
   Typography,
   TextField,
-  Button,
   Checkbox,
   FormControlLabel,
   CircularProgress,
@@ -28,6 +27,7 @@ import {
   MenuItem,
   InputLabel,
   FormControl,
+  Button,
 } from '@mui/material';
 import {
   Home as HomeIcon,
@@ -40,9 +40,10 @@ import {
 } from '@mui/icons-material';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { api } from '../apis'; 
+import { api } from '../apis';
 import Admin from './Register/Admin';
-
+import Session from '../helpers/Session';
+import { subscribeToPushNotifications } from '../pushNotifications';
 
 const RegisterPage = () => {
   const { role } = useParams();
@@ -68,6 +69,7 @@ const RegisterPage = () => {
     level: '',
     faculty: '',
     department: '',
+    fcm_token: Session.getLocalStorage("wp")
   });
 
   const [error, setError] = useState('');
@@ -77,6 +79,7 @@ const RegisterPage = () => {
   const [levels, setLevels] = useState([]);
 
   useEffect(() => {
+    requestNotificationPermission();
     const fetchFaculties = async () => {
       try {
         const response = await api.faculty.getAllFaculties();
@@ -116,13 +119,6 @@ const RegisterPage = () => {
     if (formData.faculty && formData.department) {
       const fetchLevels = async () => {
         try {
-          // Assuming you have an API call to get levels based on faculty and department
-          // const response = await api.levels.getLevels(formData.faculty, formData.department);
-          // if (response.status === 200) {
-          //   setLevels(response.data);
-          // }
-
-          // Placeholder for levels since the API call is commented out
           setLevels([100, 200, 300, 400, 500]);
         } catch (error) {
           console.error('Error fetching levels:', error);
@@ -136,6 +132,20 @@ const RegisterPage = () => {
     }
   }, [formData.faculty, formData.department]);
 
+  const requestNotificationPermission = async () => {
+    const permission = await Notification.requestPermission();
+    if (permission === "granted") {
+      const subscription = await subscribeToPushNotifications();
+      if (subscription) {
+        console.log('Push notification subscription:', subscription);
+        console.log(subscription);
+        Session.setLocalStorage("wp", JSON.stringify(subscription));
+      }
+    } else if (permission === "denied") {
+      alert("You denied notification permissions. Some features may not work.");
+    }
+  };
+
   const handleDrawerToggle = () => {
     setIsDrawerOpen(!isDrawerOpen);
   };
@@ -147,7 +157,6 @@ const RegisterPage = () => {
       [name]: type === 'checkbox' ? checked : value
     }));
 
-    // Reset dependent fields when faculty or department changes
     if (name === 'faculty') {
       setFormData(prevData => ({
         ...prevData,
@@ -172,6 +181,8 @@ const RegisterPage = () => {
       setIsLoading(false);
       return;
     }
+
+
 
     try {
       let response;
@@ -279,7 +290,7 @@ const RegisterPage = () => {
               required
               margin="normal"
             />
-            {role === 'student' && (
+            {(role === 'student' || role === 'lecturer') && (
               <>
                 <FormControl fullWidth margin="normal">
                   <InputLabel>Faculty</InputLabel>
@@ -315,7 +326,7 @@ const RegisterPage = () => {
                     </Select>
                   </FormControl>
                 )}
-                {formData.faculty && formData.department && (
+                {role === 'student' && formData.faculty && formData.department && (
                   <FormControl fullWidth margin="normal">
                     <InputLabel>Level</InputLabel>
                     <Select
@@ -333,7 +344,7 @@ const RegisterPage = () => {
                     </Select>
                   </FormControl>
                 )}
-                <FormControlLabel
+                {role === 'student' && <FormControlLabel
                   control={
                     <Checkbox
                       checked={formData.classRep}
@@ -343,7 +354,7 @@ const RegisterPage = () => {
                     />
                   }
                   label="Class Representative"
-                />
+                />}
               </>
             )}
           </>
@@ -362,7 +373,8 @@ const RegisterPage = () => {
                 <Typography variant="body1">Matric Number: {formData.matric_no}</Typography>
                 <Typography variant="body1">Phone Number: {formData.phone}</Typography>
                 <Typography variant="body1">Faculty: {faculties.find(faculty => faculty.id === formData.faculty)?.name || 'N/A'}</Typography>
-                <Typography variant="body1">Department: {departments.find(department => department.id === formData.department)?.name || 'N/A'}</Typography>                <Typography variant="body1">Level: {formData.level}</Typography>
+                <Typography variant="body1">Department: {departments.find(department => department.id === formData.department)?.name || 'N/A'}</Typography>
+                <Typography variant="body1">Level: {formData.level}</Typography>
                 <Typography variant="body1">
                   Class Representative: {formData.classRep ? 'Yes' : 'No'}
                 </Typography>
@@ -389,7 +401,7 @@ const RegisterPage = () => {
 
   return (
     <Box>
-      <AppBar position="static">
+      <AppBar position="static" color="default">
         <Toolbar>
           <IconButton
             edge="start"
@@ -414,7 +426,7 @@ const RegisterPage = () => {
             </ListItemIcon>
             <ListItemText primary="Home" />
           </ListItem>
-          <ListItem button onClick={() => navigate('/login')}>
+          <ListItem button onClick={() => navigate('/')}>
             <ListItemIcon>
               <LoginIcon />
             </ListItemIcon>
@@ -469,6 +481,8 @@ const RegisterPage = () => {
                 disabled={activeStep === 0}
                 onClick={handleBack}
                 startIcon={<BackIcon />}
+                variant="contained"
+                color="primary"
               >
                 Back
               </Button>

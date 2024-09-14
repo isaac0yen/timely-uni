@@ -11,6 +11,7 @@ const authMiddleware = (req, res, next) => {
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) return res.sendStatus(404);
     req.context = user;
+    console.log(user)
     next();
   });
 };

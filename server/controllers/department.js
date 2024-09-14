@@ -26,7 +26,12 @@ const createDepartment = async (req, res) => {
       throw new Error("Sorry, an error occured.");
     }
 
+    res.status(200).json({
+      message: "Department created successfully",
+    });
+
   } catch (error) {
+    console.log(error)
     res.status(400).json({
       message: error.message,
     });
@@ -80,7 +85,8 @@ const updateDepartment = async (req, res) => {
 
 }
 
-const getDepartment = async () => {
+
+const getDepartment = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -109,6 +115,16 @@ const getDepartment = async () => {
 const getAllDepartments = async (req, res) => {
 
   const { faculty } = req.params;
+
+  if (faculty === null || faculty === undefined || faculty === 'null' || faculty === 'undefined') {
+    const departments = await db.findMany("department",{});
+    res.status(200).json({
+      message: "All departments fetched successfully",
+      status: 200,
+      data: departments,
+    });
+    return;
+  }
 
   try {
     const departments = await db.findMany("department", { faculty });

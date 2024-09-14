@@ -26,7 +26,6 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
-
   Menu as MenuIcon,
   Home as HomeIcon,
   Person as PersonIcon,
@@ -36,11 +35,14 @@ import {
   ExitToApp as LogoutIcon,
   ArrowBack as BackIcon,
   ArrowForward as ForwardIcon,
+  Repeat as RepeatIcon,
+  ThumbUp,
 } from '@mui/icons-material';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { api } from '../apis';
 import isLoggedIn from '../helpers/IsLoggedIn';
+import Session from '../helpers/Session';
 
 const StyledDrawer = styled(Drawer)(({ theme }) => ({
   '& .MuiDrawer-paper': {
@@ -70,7 +72,6 @@ const RoomPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [user, setUser] = useState(null);
-
 
   useEffect(() => {
     const loggedInUser = isLoggedIn();
@@ -207,49 +208,55 @@ const RoomPage = () => {
   };
   const drawerContent = (
     <Box sx={{ p: 2 }}>
-  <Avatar
-    sx={{ width: 64, height: 64, mb: 2, mx: 'auto' }}
-    alt={user?.name}
-    src="/path-to-user-image.jpg"
-  />
-  <Typography variant="h6" align="center" gutterBottom>
-    {user?.name}
-  </Typography>
-  <Typography variant="body2" align="center" gutterBottom>
-    {user?.email}
-  </Typography>
-  <List>
-    {[
+      <Avatar
+        sx={{ width: 64, height: 64, mb: 2, mx: 'auto' }}
+        alt={user?.name}
+        src="/path-to-user-image.jpg"
+      />
+      <Typography variant="h6" align="center" gutterBottom>
+        {user?.name}
+      </Typography>
+      <Typography variant="body2" align="center" gutterBottom>
+        {user?.email}
+      </Typography>
+      <List>
+      {[
       { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard' },
       { text: 'Courses', icon: <BookIcon />, path: '/course' },
       { text: 'Rooms', icon: <RoomIcon />, path: '/rooms' },
       { text: 'Timetable', icon: <ScheduleIcon />, path: '/timetable' },
-    ].filter(item => user?.role !== 'student' || (item.text !== 'Courses' && item.text !== 'Rooms')).map((item) => (
-      <ListItem button key={item.text} component={Link} to={item.path} onClick={() => navigate(item.path)}>
-        <ListItemIcon sx={{ color: 'inherit' }}>{item.icon}</ListItemIcon>
-        <ListItemText primary={item.text} />
-      </ListItem>
-    ))}
-    <ListItem button onClick={() => navigate('/')}>
-      <ListItemIcon sx={{ color: 'inherit' }}>
-        <LogoutIcon />
-      </ListItemIcon>
-      <ListItemText primary="Logout" />
-    </ListItem>
-  </List>
-</Box>
-);
+      { text: 'Carry Over', icon: <RepeatIcon />, path: '/carry-over', role: 'student' },
+      { text: 'Approval', icon: <ThumbUp />, path: '/approval', role: 'admin' },
+    ].filter(item => 
+      (user?.role === 'student' && item.text !== 'Courses' && item.text !== 'Rooms') ||
+      (user?.role === 'admin' && item.role !== 'student') ||
+      (user?.role !== 'student' && user?.role !== 'admin' && item.role !== 'student' && item.role !== 'admin')
+    ).map((item) => (
+          <ListItem button key={item.text} component={Link} to={item.path} onClick={() => navigate(item.path)}>
+            <ListItemIcon sx={{ color: 'inherit' }}>{item.icon}</ListItemIcon>
+            <ListItemText primary={item.text} />
+          </ListItem>
+        ))}
+        <ListItem button onClick={() => Session.logout()}>
+          <ListItemIcon sx={{ color: 'inherit' }}>
+            <LogoutIcon />
+          </ListItemIcon>
+          <ListItemText primary="Logout" />
+        </ListItem>
+      </List>
+    </Box>
+  );
 
   return (
-    <Box>
-      <StyledAppBar position="static">
+    <Box sx={{ display: 'flex' }}>
+      <StyledAppBar position="fixed">
         <Toolbar>
           <IconButton
             edge="start"
             color="inherit"
             aria-label="menu"
             onClick={handleDrawerToggle}
-            sx={{ mr: 2 }}
+            sx={{ mr: 2, display: { sm: 'none' } }}
           >
             <MenuIcon />
           </IconButton>
@@ -260,91 +267,108 @@ const RoomPage = () => {
       </StyledAppBar>
 
       <StyledDrawer
-        anchor="left"
-        open={isDrawerOpen}
-        onClose={handleDrawerToggle}
         variant={isMobile ? 'temporary' : 'permanent'}
+        open={isMobile ? isDrawerOpen : true}
+        onClose={handleDrawerToggle}
+        ModalProps={{
+          keepMounted: true,
+        }}
+        sx={{
+          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: 240 },
+          display: { xs: 'block', sm: 'block' },
+        }}
       >
         {drawerContent}
       </StyledDrawer>
 
-      <Container maxWidth="sm">
-        <Paper elevation={3} sx={{ padding: 3, mt: 3 }}>
-          <Typography variant="h4" align="center" gutterBottom>
-            Create New Room
-          </Typography>
-          <form onSubmit={handleSubmit}>
-            <Stepper activeStep={activeStep} alternativeLabel>
-              {steps.map((label) => (
-                <Step key={label}>
-                  <StepLabel>{label}</StepLabel>
-                </Step>
-              ))}
-            </Stepper>
-            <AnimatePresence mode='wait'>
-              <motion.div
-                key={activeStep}
-                initial={{ opacity: 0, x: 100 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -100 }}
-                transition={{ duration: 0.5 }}
-              >
-                {getStepContent(activeStep)}
-              </motion.div>
-            </AnimatePresence>
-            {error && (
-              <Typography color="error" align="center">
-                {error}
-              </Typography>
-            )}
-            <Box display="flex" justifyContent="space-between" mt={3}>
-              <Button
-                disabled={activeStep === 0}
-                onClick={handleBack}
-                startIcon={<BackIcon />}
-              >
-                Back
-              </Button>
-              {activeStep === steps.length - 1 ? (
-                <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  endIcon={isLoading ? <CircularProgress size={20} /> : <ForwardIcon />}
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          width: { sm: `calc(100% - 240px)` },
+          ml: { sm: `240px` },
+          mt: ['48px', '56px', '64px'],
+        }}
+      >
+        <Container maxWidth="sm">
+          <Paper elevation={3} sx={{ padding: 3, mt: 3 }}>
+            <Typography variant="h4" align="center" gutterBottom>
+              Create New Room
+            </Typography>
+            <form onSubmit={handleSubmit}>
+              <Stepper activeStep={activeStep} alternativeLabel>
+                {steps.map((label) => (
+                  <Step key={label}>
+                    <StepLabel>{label}</StepLabel>
+                  </Step>
+                ))}
+              </Stepper>
+              <AnimatePresence mode='wait'>
+                <motion.div
+                  key={activeStep}
+                  initial={{ opacity: 0, x: 100 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -100 }}
+                  transition={{ duration: 0.5 }}
                 >
-                  {isLoading ? 'Creating...' : 'Create Room'}
-                </Button>
-              ) : (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={handleNext}
-                  endIcon={<ForwardIcon />}
-                >
-                  Next
-                </Button>
+                  {getStepContent(activeStep)}
+                </motion.div>
+              </AnimatePresence>
+              {error && (
+                <Typography color="error" align="center">
+                  {error}
+                </Typography>
               )}
-            </Box>
-          </form>
-        </Paper>
+              <Box display="flex" justifyContent="space-between" mt={3}>
+                <Button
+                  disabled={activeStep === 0}
+                  onClick={handleBack}
+                  startIcon={<BackIcon />}
+                >
+                  Back
+                </Button>
+                {activeStep === steps.length - 1 ? (
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    color="primary"
+                    endIcon={isLoading ? <CircularProgress size={20} /> : <ForwardIcon />}
+                  >
+                    {isLoading ? 'Creating...' : 'Create Room'}
+                  </Button>
+                ) : (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleNext}
+                    endIcon={<ForwardIcon />}
+                  >
+                    Next
+                  </Button>
+                )}
+              </Box>
+            </form>
+          </Paper>
 
-        <Paper elevation={3} sx={{ padding: 3, mt: 3 }}>
-          <Typography variant="h5" align="center" gutterBottom>
-            Existing Rooms
-          </Typography>
-          <List>
-            {rooms.map((room) => (
-              <ListItem key={room.id}>
-                <ListItemIcon>
-                  <RoomIcon />
-                </ListItemIcon>
-                <ListItemText primary={room.name} secondary={`Capacity: ${room.capacity}`} />
-              </ListItem>
-            ))}
-          </List>
-        </Paper>
-      </Container>
-      <ToastContainer />
+          <Paper elevation={3} sx={{ padding: 3, mt: 3 }}>
+            <Typography variant="h5" align="center" gutterBottom>
+              Existing Rooms
+            </Typography>
+            <List>
+              {rooms.map((room) => (
+                <ListItem key={room.id}>
+                  <ListItemIcon>
+                    <RoomIcon />
+                  </ListItemIcon>
+                  <ListItemText primary={room.name} secondary={`Capacity: ${room.capacity}`} />
+                </ListItem>
+              ))}
+            </List>
+          </Paper>
+        </Container>
+        <ToastContainer />
+      </Box>
     </Box>
   );
 };

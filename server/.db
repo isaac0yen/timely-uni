@@ -3,29 +3,29 @@ CREATE DATABASE IF NOT EXISTS isaac0yen_school_management;
 USE isaac0yen_school_management;
 
 -- Create users table
-CREATE TABLE users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    role ENUM('admin', 'student', 'lecturer') NOT NULL,
-    matric_no VARCHAR(20),
-    phone VARCHAR(20),
-    classRep BOOLEAN,
-    level INT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+CREATE TABLE `users` (
+  `id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `role` enum('admin','student','lecturer') NOT NULL,
+  `matric_no` varchar(20) DEFAULT NULL,
+  `status` enum('ACTIVE','INACTIVE') NOT NULL DEFAULT 'ACTIVE',
+  `phone` varchar(20) DEFAULT NULL,
+  `classRep` tinyint(1) DEFAULT NULL,
+  `level` int DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `fcm_token` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Create faculty table
-CREATE TABLE faculty (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    head INT,
-    created_by INT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (head) REFERENCES users(id),
-    FOREIGN KEY (created_by) REFERENCES users(id)
-);
+CREATE TABLE `faculty` (
+  `id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `head` int DEFAULT NULL,
+  `created_by` int DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Create department table
 CREATE TABLE department (
@@ -41,69 +41,199 @@ CREATE TABLE department (
 );
 
 -- Create user_department table
-CREATE TABLE user_department (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
-    department_id INT,
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (department_id) REFERENCES department(id)
-);
+CREATE TABLE `department` (
+  `id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `faculty` int DEFAULT NULL,
+  `head` int DEFAULT NULL,
+  `created_by` int DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Create course table
-CREATE TABLE course (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    department INT,
-    faculty INT,
-    code VARCHAR(20) NOT NULL,
-    lecturer INT,
-    created_by INT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (department) REFERENCES department(id),
-    FOREIGN KEY (faculty) REFERENCES faculty(id),
-    FOREIGN KEY (lecturer) REFERENCES users(id),
-    FOREIGN KEY (created_by) REFERENCES users(id)
-);
+CREATE TABLE `course` (
+  `id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `department` int DEFAULT NULL,
+  `faculty` int DEFAULT NULL,
+  `level` int UNSIGNED NOT NULL,
+  `code` varchar(20) NOT NULL,
+  `lecturer` int DEFAULT NULL,
+  `created_by` int DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Create room table
-CREATE TABLE room (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    capacity INT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+CREATE TABLE `room` (
+  `id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `capacity` int NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Create timetable table
-CREATE TABLE timetable (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    label VARCHAR(255) NOT NULL,
-    course INT,
-    time_start TIME NOT NULL,
-    time_end TIME NOT NULL,
-    date DATE NOT NULL,
-    level INT NOT NULL,
-    created_by INT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (course) REFERENCES course(id),
-    FOREIGN KEY (created_by) REFERENCES users(id)
-);
+CREATE TABLE `timetable` (
+  `id` int NOT NULL,
+  `label` varchar(255) NOT NULL,
+  `course` int DEFAULT NULL,
+  `department` int DEFAULT NULL,
+  `time_start` time NOT NULL,
+  `time_end` time NOT NULL,
+  `date` date NOT NULL,
+  `level` int UNSIGNED NOT NULL,
+  `room` int NOT NULL,
+  `created_by` int DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Create codes table
-CREATE TABLE codes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    email VARCHAR(255) NOT NULL,
-    code INT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+CREATE TABLE `codes` (
+  `id` int NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `code` int NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-ALTER TABLE `course` ADD `level` INT(3) UNSIGNED NOT NULL AFTER `faculty`;
-ALTER TABLE `timetable` CHANGE `level` `level` INT(3) UNSIGNED NOT NULL;
+CREATE TABLE `user_department` (
+  `id` int NOT NULL,
+  `user_id` int DEFAULT NULL,
+  `department_id` int DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-ALTER TABLE `users` ADD `status` ENUM('ACTIVE','INACTIVE') NOT NULL DEFAULT 'ACTIVE' AFTER `matric_no`;
 
-ALTER TABLE `timetable` ADD `department` INT NOT NULL AFTER `course`;
 
-ALTER TABLE `timetable` ADD CONSTRAINT `timetable_ibfk_3` FOREIGN KEY (`department`) REFERENCES `department`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+ALTER TABLE `codes`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `course`
+--
+ALTER TABLE `course`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `department` (`department`),
+  ADD KEY `faculty` (`faculty`),
+  ADD KEY `lecturer` (`lecturer`),
+  ADD KEY `created_by` (`created_by`);
+
+--
+-- Indexes for table `department`
+--
+ALTER TABLE `department`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `faculty` (`faculty`),
+  ADD KEY `head` (`head`),
+  ADD KEY `created_by` (`created_by`);
+
+--
+-- Indexes for table `faculty`
+--
+ALTER TABLE `faculty`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `head` (`head`),
+  ADD KEY `created_by` (`created_by`);
+
+--
+-- Indexes for table `room`
+--
+ALTER TABLE `room`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `timetable`
+--
+ALTER TABLE `timetable`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `course` (`course`),
+  ADD KEY `created_by` (`created_by`),
+  ADD KEY `timetable_ibfk_3` (`department`);
+
+--
+-- Indexes for table `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email` (`email`);
+
+--
+-- Indexes for table `user_department`
+--
+ALTER TABLE `user_department`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `department_id` (`department_id`);
+
+
+
+
+
+
+ALTER TABLE `codes`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `course`
+--
+ALTER TABLE `course`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `department` (`department`),
+  ADD KEY `faculty` (`faculty`),
+  ADD KEY `lecturer` (`lecturer`),
+  ADD KEY `created_by` (`created_by`);
+
+--
+-- Indexes for table `department`
+--
+ALTER TABLE `department`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `faculty` (`faculty`),
+  ADD KEY `head` (`head`),
+  ADD KEY `created_by` (`created_by`);
+
+--
+-- Indexes for table `faculty`
+--
+ALTER TABLE `faculty`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `head` (`head`),
+  ADD KEY `created_by` (`created_by`);
+
+--
+-- Indexes for table `room`
+--
+ALTER TABLE `room`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `timetable`
+--
+ALTER TABLE `timetable`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `course` (`course`),
+  ADD KEY `created_by` (`created_by`),
+  ADD KEY `timetable_ibfk_3` (`department`);
+
+--
+-- Indexes for table `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email` (`email`);
+
+--
+-- Indexes for table `user_department`
+--
+ALTER TABLE `user_department`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `department_id` (`department_id`);
+
+--
+-- Change the default status to INACTIVE
+--
+ALTER TABLE `users` CHANGE `status` `status` ENUM('ACTIVE','INACTIVE') CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL DEFAULT 'INACTIVE';
+
+
 -- Insert sample data
 
 -- Users

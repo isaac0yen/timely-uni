@@ -7,11 +7,11 @@ const createFaculty = async (req, res) => {
 
     const { name, head } = req.body;
 
-    if (Validate.string(name)) {
+    if (!Validate.string(name)) {
       throw new Error("Name is required");
     }
 
-    if (Validate.integer(head)) {
+    if (!Validate.integer(head)) {
       throw new Error("Head is required");
     }
 
@@ -26,6 +26,7 @@ const createFaculty = async (req, res) => {
     });
 
   } catch (error) {
+    console.log(error)
     res.status(400).json({
       error: error.message
     })

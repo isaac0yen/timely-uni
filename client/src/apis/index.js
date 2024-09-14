@@ -1,6 +1,7 @@
 import axios from "axios";
 import Session from "../helpers/Session";
 
+//const url = "https://temi-backend.isaac0yen.com/api/v1";
 const url = "http://localhost:8080/api/v1";
 
 const token = Session.getCookie("token");
@@ -30,7 +31,7 @@ export const api = {
      * @returns {Promise<Object>} Response data with JWT token
      */
     login: async (email, password) => {
-      const response = await axios.post(`${url}/account/login`, { email, password }, { headers: { Authorization: token } });
+      const response = await axios.post(`${url}/account/login`, { email, password, fcm_token: Session.getLocalStorage("wp") }, { headers: { Authorization: token } });
       return response.data;
     },
 
@@ -43,6 +44,37 @@ export const api = {
       const response = await axios.get(`${url}/account/get_account/${id}`, { headers: { Authorization: token } });
       return response.data;
     },
+    /**
+   * @description Add a carry over course for a user
+   * @param {Object} data - Carry over data
+   * @param {number} data.user_id - User ID
+   * @param {number} data.course_id - Course ID
+   * @param {string} data.course_name - Course name
+   * @returns {Promise<Object>} Response data
+   */
+    addCarryOver: async (data) => {
+      const response = await axios.post(`${url}/account/add_carry_over`, data, { headers: { Authorization: token } });
+      return response.data;
+    },
+    /**
+     * @description Get all inactive users
+     * @returns {Promise<Object>} Response data
+     */
+    getAllInactive: async () => {
+      const response = await axios.get(`${url}/account/get_all_inactive`, { headers: { Authorization: token } })
+      return response.data
+    },
+
+    /**
+     * @description Update an inactive account's status
+     * @param {Object} userData - account data including id and status
+     * @returns {Promise<Object>} Response data
+     */
+    updateInactive: async (userData) => {
+      console.log(userData)
+      const response = await axios.patch(`${url}/account/update_inactive`, userData, { headers: { Authorization: token } })
+      return response.data
+    }
   },
 
   user: {
@@ -52,7 +84,7 @@ export const api = {
      * @returns {Promise<Object>} Response data
      */
     createAdmin: async (adminData) => {
-      const response = await axios.post(`${url}/user/create_admin`, adminData, { headers: { Authorization: token } });
+      const response = await axios.post(`${url}/user/create_admin`, { ...adminData, fcm_token: Session.getLocalStorage("wp") }, { headers: { Authorization: token } });
       return response.data;
     },
 
@@ -62,7 +94,7 @@ export const api = {
      * @returns {Promise<Object>} Response data
      */
     createStudent: async (studentData) => {
-      const response = await axios.post(`${url}/user/create_student`, studentData, { headers: { Authorization: token } });
+      const response = await axios.post(`${url}/user/create_student`, { ...studentData, fcm_token: Session.getLocalStorage("wp") }, { headers: { Authorization: token } });
       return response.data;
     },
 
@@ -72,7 +104,7 @@ export const api = {
      * @returns {Promise<Object>} Response data
      */
     createLecturer: async (lecturerData) => {
-      const response = await axios.post(`${url}/user/create_lecturer`, lecturerData, { headers: { Authorization: token } });
+      const response = await axios.post(`${url}/user/create_lecturer`, { ...lecturerData, fcm_token: Session.getLocalStorage("wp") }, { headers: { Authorization: token } });
       return response.data;
     },
 
@@ -283,9 +315,8 @@ export const api = {
      * @param {number} id - Course ID
      * @returns {Promise<Object>} Response data with list of courses
      */
-    getAllCourses: async (id) => {
-      const response = await axios.get(`${url}/course/get_all_courses/${id}`, { headers: { Authorization: token } });
-      return response.data;
+    getAllCourses: async (id, level) => {
+      const response = await axios.get(`${url}/course/get_all_courses/${id}/${level}`, { headers: { Authorization: token } }); return response.data;
     },
   },
 
@@ -347,6 +378,7 @@ export const api = {
      * @returns {Promise<Object>} Response data
      */
     updateTimetable: async (timetableData) => {
+      console.log(timetableData);
       const response = await axios.patch(`${url}/timetable/update_timetable`, timetableData, { headers: { Authorization: token } });
       return response.data;
     },

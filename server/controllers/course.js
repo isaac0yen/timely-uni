@@ -1,10 +1,11 @@
+const e = require("express");
 const { db } = require("../helpers/Database");
 const Validate = require("../helpers/Validate");
 
 const createCourse = async (req, res) => {
   try {
     const { id: created_by } = req.context;
-    const { name, department, faculty, code, lecturer } = req.body;
+    const { name, department, faculty, code, lecturer, level } = req.body;
 
     if (!Validate.string(name)) {
       throw new Error("Name is required");
@@ -26,7 +27,7 @@ const createCourse = async (req, res) => {
       throw new Error("Lecturer is required");
     }
 
-    const inserted = await db.insertOne("course", { name, department, faculty, code, lecturer, created_by });
+    const inserted = await db.insertOne("course", { name, department, faculty, code, lecturer, created_by, level });
 
     if (inserted < 1) {
       throw new Error("Sorry, an error occured.");
@@ -37,6 +38,7 @@ const createCourse = async (req, res) => {
     });
 
   } catch (error) {
+    console.log(error)
     res.status(400).json({
       message: error.message,
     });
@@ -109,32 +111,58 @@ const getCourse = async (req, res) => {
 }
 
 const getAllCourses = async (req, res) => {
-  const { id } = req.params;
+  const { id, level } = req.params;
+  console.log(id)
 
   const department = await db.findOne("user_department", { user_id: id })
+  console.log(id, level)
 
-  if (parseInt(department.department_id) <= 0) {
-    throw new Error("Course is required");
-  }
+  if (department === undefined || department === "undefined" || department === null || department === "null") {
+    console.log(11)
 
+    try {
+      let courses = await db.findMany("course");
 
-  try {
-    const courses = await db.findMany("course", { department: department.department_id });
+      if (!Validate.array(courses)) {
+        throw new Error("No Courses found");
+      }
 
-    if (!Validate.array(courses)) {
-      throw new Error("Invalid courses");
+      res.status(200).json({
+        message: "Courses fetched successfully",
+        status: 200,
+        data: courses,
+      });
+    } catch (error) {
+      res.status(400).json({
+        message: error.message,
+      });
     }
 
-    res.status(200).json({
-      message: "Courses fetched successfully",
-      status: 200,
-      data: courses,
-    });
-  } catch (error) {
-    res.status(400).json({
-      message: error.message,
-    });
+  } else {
+    try {
+      const query = { department: department.department_id };
+      if (level != "null") {
+        query.level = level;
+      }
+      const courses = await db.findMany("course", query);
+      console.log(courses)
+      if (!Validate.array(courses)) {
+        throw new Error("No Courses found");
+      }
+
+      res.status(200).json({
+        message: "Courses fetched successfully",
+        status: 200,
+        data: courses,
+      });
+    } catch (error) {
+      console.log(error)
+      res.status(400).json({
+        message: error.message,
+      });
+    }
   }
+
 }
 
 module.exports = {

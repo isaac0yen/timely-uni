@@ -123,6 +123,15 @@ const Session = {
     } else {
       console.error("Key must be of type string");
     }
+  },
+
+  logout: async () => {
+    Session.removeCookie("token");
+    Session.removeLocalStorage("user");
+    Session.removeLocalStorage("wp");
+    Session.removeLocalStorage("user_id");
+
+    window.location.href = "/";
   }
 };
 

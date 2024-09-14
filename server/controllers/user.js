@@ -4,8 +4,7 @@ const { cipherPass } = require("../helpers/Crypt");
 
 const createAdmin = async (req, res) => {
   try {
-
-    const { name, email, password, code, phone } = req.body;
+    const { name, email, password, code, phone, fcm_token } = req.body;
 
     if (!Validate.string(name)) {
       throw new Error("Name is required");
@@ -18,6 +17,11 @@ const createAdmin = async (req, res) => {
     }
     if (parseInt(code) < 0) {
       throw new Error("Code is invalid");
+    }
+
+    const existingUser = await db.findOne("users", { email });
+    if (existingUser !== undefined) {
+      throw new Error("User with this email already exists");
     }
 
     const codeExists = await db.findOne("codes", { email, code: code });
@@ -34,6 +38,7 @@ const createAdmin = async (req, res) => {
       password: hashedPassword,
       role: "admin",
       phone: Validate.formatPhone(phone),
+      fcm_token
     };
 
     const inserted = await db.insertOne("users", admin);
@@ -58,8 +63,7 @@ const createAdmin = async (req, res) => {
 
 const createStudent = async (req, res) => {
   try {
-
-    const { name, email, password, matric_no, phone, classRep, level, faculty, department } = req.body;
+    const { name, email, password, matric_no, phone, classRep, level, faculty, department, fcm_token } = req.body;
 
     if (!Validate.string(name)) {
       throw new Error("Name is required");
@@ -86,6 +90,11 @@ const createStudent = async (req, res) => {
       throw new Error("Invalid department");
     }
 
+    const existingUser = await db.findOne("users", { email });
+    if (existingUser !== undefined) {
+      throw new Error("User with this email already exists");
+    }
+
     const hashedPassword = cipherPass(password);
 
     const student = {
@@ -97,6 +106,7 @@ const createStudent = async (req, res) => {
       classRep: false,
       role: "student",
       level,
+      fcm_token
     };
 
     const inserted = await db.insertOne("users", student);
@@ -106,7 +116,6 @@ const createStudent = async (req, res) => {
     }
 
     const insertedDepartment = await db.insertOne("user_department", { user_id: inserted, department_id: department });
-
 
     if (insertedDepartment < 1) {
       /* THIS IS A VERY BAD PRACTICE! */
@@ -127,40 +136,61 @@ const createStudent = async (req, res) => {
 }
 
 const createLecturer = async (req, res) => {
-  const { name, email, password } = req.body;
+  try {
+    const { name, email, password, fcm_token , department} = req.body;
 
-  if (!Validate.string(name)) {
-    throw new Error("Name is required");
+    if (!Validate.string(name)) {
+      throw new Error("Name is required");
+    }
+
+    if (!Validate.email(email)) {
+      throw new Error("Invalid email");
+    }
+
+    if (!Validate.string(password)) {
+      throw new Error("Password is required");
+    }
+
+    const existingUser = await db.findOne("users", { email });
+    if (existingUser !== undefined) {
+      throw new Error("User with this email already exists");
+    }
+
+    const hashedPassword = cipherPass(password);
+
+    const lecturer = {
+      name,
+      email,
+      password: hashedPassword,
+      role: "lecturer",
+      fcm_token
+    }
+
+    const inserted = await db.insertOne("users", lecturer);
+
+    if (inserted < 1) {
+      throw new Error("Sorry, an error occured.");
+    }
+
+    const insertedDepartment = await db.insertOne("user_department", { user_id: inserted, department_id: department });
+
+    if (insertedDepartment < 1) {
+      /* THIS IS A VERY BAD PRACTICE! */
+      await db.deleteOne("users", { id: inserted });
+      throw new Error("Sorry, an error occurred.");
+    }
+
+    res.status(200).json({
+      status: 200,
+      message: "Lecturer created successfully",
+    });
+  } catch (error) {
+    console.log(error)
+    console.log(error);
+    return res.status(400).json({
+      message: error.message,
+    });
   }
-
-  if (!Validate.email(email)) {
-    throw new Error("Invalid email");
-  }
-
-  if (!Validate.string(password)) {
-    throw new Error("Password is required");
-  }
-
-  const hashedPassword = cipherPass(password);
-
-  const lecturer = {
-    name,
-    email,
-    password: hashedPassword,
-    role: "lecturer",
-  }
-
-  const inserted = await db.insertOne("users", lecturer);
-
-  if (inserted < 1) {
-    throw new Error("Sorry, an error occured.");
-  }
-
-  res.status(200).json({
-    status: 200,
-    message: "Lecturer created successfully",
-  });
-
 }
 
 const updateAdmin = async (req, res) => {
@@ -320,7 +350,7 @@ const getStudent = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!Validate.integer(id)) {
+    if (!parseInt(id) > 1) {
       throw new Error("Invalid student");
     }
 

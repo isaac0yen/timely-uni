@@ -5,17 +5,8 @@ import { api } from '../apis/index';
 import {
   Box, Grid, Typography, Modal, Paper, useTheme, useMediaQuery, Button,
   TextField, FormControl, InputLabel, Select, MenuItem, IconButton, Tooltip,
-  ListItemText,
-  ListItemIcon,
-  Link,
-  Avatar,
-  ListItem,
-  List,
-  Toolbar,
-  Drawer,
-  AppBar,
-  styled,
-  Container
+  ListItemText, ListItemIcon, Link, Avatar, ListItem, List, Toolbar,
+  Drawer, AppBar, styled, Container, CircularProgress, Switch, FormControlLabel
 } from '@mui/material';
 import {
   ChevronLeft as ChevronLeftIcon,
@@ -30,13 +21,18 @@ import {
   Schedule as ScheduleIcon,
   MeetingRoom as RoomIcon,
   ExitToApp as LogoutIcon,
+  Repeat as RepeatIcon,
+  Edit as EditIcon,
+  ThumbUp,
 } from '@mui/icons-material';
 import isLoggedIn from "../helpers/IsLoggedIn"
+import Session from '../helpers/Session';
 
-const Calendar = ({ events, currentWeek, onWeekChange, onCurrentWeek, onEventAdded }) => {
+const Calendar = ({ events, currentWeek, onWeekChange, onCurrentWeek, onEventAdded, onEventUpdated, courses, user, rooms }) => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
+  const [isUpdateEventModalOpen, setIsUpdateEventModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -58,14 +54,34 @@ const Calendar = ({ events, currentWeek, onWeekChange, onCurrentWeek, onEventAdd
     try {
       await api.timetable.createTimetable(eventData);
       setIsAddEventModalOpen(false);
-      const userResponse = await api.account.getAccount(isLoggedIn().id);
-      const response = await api.timetable.getAllTimetables(isLoggedIn().id, userResponse.data.level);
-      onEventAdded(response.data || []);
+      onEventAdded();
     } catch (error) {
       console.error('Error adding event:', error);
-      // You might want to show an error message to the user here
     }
   };
+
+  const handleUpdateEventClick = (event) => {
+    setSelectedEvent(event);
+    setIsUpdateEventModalOpen(true);
+  };
+
+  const handleUpdateEvent = async (updatedEventData) => {
+    try {
+      await api.timetable.updateTimetable({ id: selectedEvent.id, ...updatedEventData });
+      setIsUpdateEventModalOpen(false);
+      onEventUpdated();
+    } catch (error) {
+      console.error('Error updating event:', error);
+    }
+  };
+
+  const filteredEvents = events.filter(event => {
+    const eventDate = DateTime.fromISO(event.date);
+    return event.reoccur ?
+      eventDate.weekday === currentWeek.weekday :
+      eventDate.hasSame(currentWeek, 'week');
+  });
+
 
   return (
     <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, overflow: 'hidden', boxShadow: 3 }}>
@@ -111,8 +127,12 @@ const Calendar = ({ events, currentWeek, onWeekChange, onCurrentWeek, onEventAdd
                 <Typography variant="h6">{day.toFormat('d')}</Typography>
               </Box>
               <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 1 }}>
-                {events
-                  .filter(event => DateTime.fromISO(event.date).hasSame(day, 'day'))
+                {filteredEvents
+                  .filter(event => {
+                    const eventDate = DateTime.fromISO(event.date);
+                    return eventDate.hasSame(day, 'day') ||
+                      (event.reoccur && eventDate.weekday === day.weekday);
+                  })
                   .map((event, index) => (
                     <Box
                       key={index}
@@ -137,15 +157,17 @@ const Calendar = ({ events, currentWeek, onWeekChange, onCurrentWeek, onEventAdd
                     </Box>
                   ))}
               </Box>
-              <Button
-                startIcon={<AddIcon />}
-                onClick={() => handleAddEventClick(day)}
-                sx={{ m: 1 }}
-                variant="outlined"
-                size="small"
-              >
-                Add Event
-              </Button>
+              {user.role !== 'student' && (
+                <Button
+                  startIcon={<AddIcon />}
+                  onClick={() => handleAddEventClick(day)}
+                  sx={{ m: 1 }}
+                  variant="outlined"
+                  size="small"
+                >
+                  Add Event
+                </Button>
+              )}
             </Paper>
           </Grid>
         ))}
@@ -155,6 +177,10 @@ const Calendar = ({ events, currentWeek, onWeekChange, onCurrentWeek, onEventAdd
         event={selectedEvent}
         open={isEventModalOpen}
         onClose={() => setIsEventModalOpen(false)}
+        courses={courses}
+        rooms={rooms}
+        onUpdateClick={handleUpdateEventClick}
+        user={user}
       />
 
       <AddEventModal
@@ -162,14 +188,27 @@ const Calendar = ({ events, currentWeek, onWeekChange, onCurrentWeek, onEventAdd
         onClose={() => setIsAddEventModalOpen(false)}
         onSubmit={handleAddEvent}
         selectedDate={selectedDate}
+        user={user}
+        courses={courses}
+        rooms={rooms}
+      />
+
+      <UpdateEventModal
+        open={isUpdateEventModalOpen}
+        onClose={() => setIsUpdateEventModalOpen(false)}
+        onSubmit={handleUpdateEvent}
+        event={selectedEvent}
+        courses={courses}
+        rooms={rooms}
       />
     </Box>
   );
 };
 
-const EventModal = ({ event, open, onClose }) => {
+const EventModal = ({ event, open, onClose, courses, rooms, onUpdateClick, user }) => {
   if (!event) return null;
 
+  const canEditEvent = user.role === 'lecturer' || user.classRep === true || user.role === 'admin';
   return (
     <Modal open={open} onClose={onClose}>
       <Box sx={{
@@ -195,43 +234,47 @@ const EventModal = ({ event, open, onClose }) => {
           {DateTime.fromISO(event.time_end).toFormat('HH:mm')}
         </Typography>
         <Typography variant="body1">
-          Course: {event.course}
+          Course: {courses.filter(course => course.id === event.course)[0]?.name}
+        </Typography>
+        <Typography variant="body1">
+          Room: {rooms.filter(room => room.id === event.room)[0]?.name}
         </Typography>
         <Typography variant="body1">
           Level: {event.level}
         </Typography>
+        <Typography variant="body1">
+          Reoccurring: {event.reoccur ? 'Yes' : 'No'}
+        </Typography>
+        {canEditEvent && (
+          <Button
+            startIcon={<EditIcon />}
+            onClick={() => onUpdateClick(event)}
+            sx={{ mt: 2 }}
+            variant="contained"
+            color="primary"
+          >
+            Edit Event
+          </Button>
+        )}
       </Box>
     </Modal>
   );
 };
 
-const AddEventModal = ({ open, onClose, onSubmit, selectedDate }) => {
-  const [courses, setCourses] = useState([]);
+const AddEventModal = ({ open, onClose, onSubmit, selectedDate, user, courses, rooms }) => {
   const [formData, setFormData] = useState({
     label: '',
     course: '',
+    room: '',
     time_start: '',
     time_end: '',
     level: '',
+    reoccur: false,
   });
 
-  useEffect(() => {
-    const getCourses = async () => {
-      try {
-        const response = await api.course.getAllCourses(isLoggedIn().id);
-        setCourses(response.data);
-      } catch (error) {
-        console.error('Error fetching courses:', error);
-      }
-    };
-
-    if (open) {
-      getCourses();
-    }
-  }, [open]);
-
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    setFormData({ ...formData, [e.target.name]: value });
   };
 
   const handleSubmit = (e) => {
@@ -280,6 +323,23 @@ const AddEventModal = ({ open, onClose, onSubmit, selectedDate }) => {
               ))}
             </Select>
           </FormControl>
+
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Room</InputLabel>
+            <Select
+              name="room"
+              value={formData.room}
+              onChange={handleChange}
+              required
+            >
+              {rooms.map((room) => (
+                <MenuItem key={room.id} value={room.id}>
+                  {room.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
           <TextField
             fullWidth
             label="Start Time"
@@ -311,12 +371,187 @@ const AddEventModal = ({ open, onClose, onSubmit, selectedDate }) => {
             margin="normal"
             required
           />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={formData.reoccur}
+                onChange={handleChange}
+                name="reoccur"
+              />
+            }
+            label="Reoccurring Event"
+          />
+          <Typography variant="body2" color="textSecondary">
+            If checked, this event will appear on every week's timetable.
+          </Typography>
           <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
             <Button onClick={onClose} sx={{ mr: 1 }}>
               Cancel
             </Button>
             <Button type="submit" variant="contained" color="primary">
               Add Event
+            </Button>
+          </Box>
+        </form>
+      </Box>
+    </Modal>
+  );
+};
+
+const UpdateEventModal = ({ open, onClose, onSubmit, event, courses, rooms }) => {
+  const [formData, setFormData] = useState({
+    label: '',
+    course: '',
+    room: '',
+    date: '',
+    time_start: '',
+    time_end: '',
+    level: '',
+    reoccur: false,
+  });
+
+  useEffect(() => {
+    if (event) {
+      setFormData({
+        label: event.label || '',
+        course: event.course || '',
+        room: event.room || '',
+        date: DateTime.fromISO(event.date).toFormat('yyyy-MM-dd') || '',
+        time_start: DateTime.fromISO(event.time_start).toFormat('HH:mm') || '',
+        time_end: DateTime.fromISO(event.time_end).toFormat('HH:mm') || '',
+        level: event.level || '',
+        reoccur: event.reoccur || false,
+      });
+    }
+  }, [event]);
+
+  const handleChange = (e) => {
+    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    setFormData({ ...formData, [e.target.name]: value });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  return (
+    <Modal open={open} onClose={onClose}>
+      <Box sx={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: 400,
+        bgcolor: 'background.paper',
+        boxShadow: 24,
+        p: 4,
+        borderRadius: 2,
+      }}>
+        <Typography variant="h6" component="h2" gutterBottom>
+          Update Event
+        </Typography>
+        <form onSubmit={handleSubmit}>
+          <TextField
+            fullWidth
+            label="Event Label"
+            name="label"
+            value={formData.label}
+            onChange={handleChange}
+            margin="normal"
+            required
+          />
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Course</InputLabel>
+            <Select
+              name="course"
+              value={formData.course}
+              onChange={handleChange}
+              required
+            >
+              {courses.map((course) => (
+                <MenuItem key={course.id} value={course.id}>
+                  {course.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Room</InputLabel>
+            <Select
+              name="room"
+              value={formData.room}
+              onChange={handleChange}
+              required
+            >
+              {rooms.map((room) => (
+                <MenuItem key={room.id} value={room.id}>
+                  {room.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <TextField
+            fullWidth
+            label="Date"
+            name="date"
+            type="date"
+            value={formData.date}
+            onChange={handleChange}
+            margin="normal"
+            required
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            fullWidth
+            label="Start Time"
+            name="time_start"
+            type="time"
+            value={formData.time_start}
+            onChange={handleChange}
+            margin="normal"
+            required
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            fullWidth
+            label="End Time"
+            name="time_end"
+            type="time"
+            value={formData.time_end}
+            onChange={handleChange}
+            margin="normal"
+            required
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            fullWidth
+            label="Level"
+            name="level"
+            value={formData.level}
+            onChange={handleChange}
+            margin="normal"
+            required
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={formData.reoccur}
+                onChange={handleChange}
+                name="reoccur"
+              />
+            }
+            label="Reoccurring Event"
+          />
+          <Typography variant="body2" color="textSecondary">
+            If checked, this event will appear on every week's timetable.
+          </Typography>
+          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+            <Button onClick={onClose} sx={{ mr: 1 }}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="contained" color="primary">
+              Update Event
             </Button>
           </Box>
         </form>
@@ -342,23 +577,37 @@ export default function App() {
   const [currentWeek, setCurrentWeek] = useState(DateTime.local());
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [courses, setCourses] = useState([]);
+  const [rooms, setRooms] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchEvents = async () => {
+    const fetchData = async () => {
+      setIsLoading(true);
       try {
         const userResponse = await api.account.getAccount(isLoggedIn().id);
         setUser(userResponse.data);
-        const response = await api.timetable.getAllTimetables(isLoggedIn().id, userResponse.data.level);
-        setEvents(response.data || []);
+
+        const [timetableResponse, courseResponse, roomResponse] = await Promise.all([
+          api.timetable.getAllTimetables(isLoggedIn().id, userResponse.data.level),
+          api.course.getAllCourses(isLoggedIn().id, userResponse.data.level),
+          api.room.getAllRooms()
+        ]);
+
+        setEvents(timetableResponse.data || []);
+        setCourses(courseResponse.data);
+        setRooms(roomResponse.data);
       } catch (error) {
-        console.error('Error fetching events:', error);
+        console.error('Error fetching data:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchEvents();
+    fetchData();
   }, []);
 
   const handleWeekChange = (direction) => {
@@ -369,8 +618,28 @@ export default function App() {
     setCurrentWeek(DateTime.local());
   };
 
-  const handleEventAdded = (newEvents) => {
-    setEvents(newEvents);
+  const handleEventAdded = async () => {
+    setIsLoading(true);
+    try {
+      const response = await api.timetable.getAllTimetables(isLoggedIn().id, user.level);
+      setEvents(response.data || []);
+    } catch (error) {
+      console.error('Error fetching updated events:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEventUpdated = async () => {
+    setIsLoading(true);
+    try {
+      const response = await api.timetable.getAllTimetables(isLoggedIn().id, user.level);
+      setEvents(response.data || []);
+    } catch (error) {
+      console.error('Error fetching updated events:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDrawerToggle = () => {
@@ -379,38 +648,44 @@ export default function App() {
 
   const drawerContent = (
     <Box sx={{ p: 2 }}>
-  <Avatar
-    sx={{ width: 64, height: 64, mb: 2, mx: 'auto' }}
-    alt={user?.name}
-    src="/path-to-user-image.jpg"
-  />
-  <Typography variant="h6" align="center" gutterBottom>
-    {user?.name}
-  </Typography>
-  <Typography variant="body2" align="center" gutterBottom>
-    {user?.email}
-  </Typography>
-  <List>
-    {[
-      { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard' },
-      { text: 'Courses', icon: <BookIcon />, path: '/course' },
-      { text: 'Rooms', icon: <RoomIcon />, path: '/rooms' },
-      { text: 'Timetable', icon: <ScheduleIcon />, path: '/timetable' },
-    ].filter(item => user?.role !== 'student' || (item.text !== 'Courses' && item.text !== 'Rooms')).map((item) => (
-      <ListItem button key={item.text} component={Link} to={item.path} onClick={() => navigate(item.path)}>
-        <ListItemIcon sx={{ color: 'inherit' }}>{item.icon}</ListItemIcon>
-        <ListItemText primary={item.text} />
-      </ListItem>
-    ))}
-    <ListItem button onClick={() => navigate('/')}>
-      <ListItemIcon sx={{ color: 'inherit' }}>
-        <LogoutIcon />
-      </ListItemIcon>
-      <ListItemText primary="Logout" />
-    </ListItem>
-  </List>
-</Box>
-);
+      <Avatar
+        sx={{ width: 64, height: 64, mb: 2, mx: 'auto' }}
+        alt={user?.name}
+        src="/path-to-user-image.jpg"
+      />
+      <Typography variant="h6" align="center" gutterBottom>
+        {user?.name}
+      </Typography>
+      <Typography variant="body2" align="center" gutterBottom>
+        {user?.email}
+      </Typography>
+      <List>
+        {[
+          { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard' },
+          { text: 'Courses', icon: <BookIcon />, path: '/course' },
+          { text: 'Rooms', icon: <RoomIcon />, path: '/rooms' },
+          { text: 'Timetable', icon: <ScheduleIcon />, path: '/timetable' },
+          { text: 'Carry Over', icon: <RepeatIcon />, path: '/carry-over', role: 'student' },
+          { text: 'Approval', icon: <ThumbUp />, path: '/approval', role: 'admin' },
+        ].filter(item =>
+          (user?.role === 'student' && item.text !== 'Courses' && item.text !== 'Rooms') ||
+          (user?.role === 'admin' && item.role !== 'student') ||
+          (user?.role !== 'student' && user?.role !== 'admin' && item.role !== 'student' && item.role !== 'admin')
+        ).map((item) => (
+          <ListItem button key={item.text} component={Link} to={item.path} onClick={() => navigate(item.path)}>
+            <ListItemIcon sx={{ color: 'inherit' }}>{item.icon}</ListItemIcon>
+            <ListItemText primary={item.text} />
+          </ListItem>
+        ))}
+        <ListItem button onClick={() => Session.logout()}>
+          <ListItemIcon sx={{ color: 'inherit' }}>
+            <LogoutIcon />
+          </ListItemIcon>
+          <ListItemText primary="Logout" />
+        </ListItem>
+      </List>
+    </Box>
+  );
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -450,13 +725,23 @@ export default function App() {
         }}
       >
         <Container maxWidth="lg">
-          <Calendar
-            events={events}
-            currentWeek={currentWeek}
-            onWeekChange={handleWeekChange}
-            onCurrentWeek={handleCurrentWeek}
-            onEventAdded={handleEventAdded}
-          />
+          {isLoading ? (
+            <Box display="flex" justifyContent="center" alignItems="center" height="80vh">
+              <CircularProgress />
+            </Box>
+          ) : (
+            <Calendar
+              events={events}
+              currentWeek={currentWeek}
+              onWeekChange={handleWeekChange}
+              onCurrentWeek={handleCurrentWeek}
+              onEventAdded={handleEventAdded}
+              onEventUpdated={handleEventUpdated}
+              courses={courses}
+              rooms={rooms}
+              user={user}
+            />
+          )}
         </Container>
       </Box>
     </Box>

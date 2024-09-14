@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -13,6 +13,7 @@ import {
   Toolbar,
   useTheme,
   useMediaQuery,
+  CircularProgress,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -25,6 +26,9 @@ import { motion } from 'framer-motion';
 
 import Session from '../helpers/Session';
 import { api } from '../apis';
+import { subscribeToPushNotifications } from '../pushNotifications';
+import isLoggedIn from '../helpers/IsLoggedIn';
+
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   backgroundColor: theme.palette.grey[800],
@@ -39,15 +43,47 @@ const StyledForm = styled('form')(({ theme }) => ({
   margin: '0 auto',
 }));
 
+const StyledButton = styled(Button)(({ theme }) => ({
+  backgroundColor: theme.palette.grey[800],
+  color: theme.palette.common.white,
+  '&:hover': {
+    backgroundColor: theme.palette.grey[700],
+  },
+}));
+
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+
+
+  useEffect(() => {
+    requestNotificationPermission();
+
+    if (isLoggedIn()) {
+      navigate("/dashboard");
+    }
+
+  }, []);
+
+  const requestNotificationPermission = async () => {
+    const permission = await Notification.requestPermission();
+    if (permission === "granted") {
+      const subscription = await subscribeToPushNotifications();
+      if (subscription) {
+        console.log('Push notification subscription:', subscription);
+        console.log(subscription);
+        Session.setLocalStorage("wp", JSON.stringify(subscription));
+      }
+    } else if (permission === "denied") {
+      alert("You denied notification permissions. Some features may not work.");
+    }
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const response = await api.account.login(email, password);
       console.log(response);
@@ -64,6 +100,8 @@ const LoginPage = () => {
     } catch (err) {
       console.log(err);
       toast.error(err?.response?.data?.message || 'An error occurred during login');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -117,16 +155,16 @@ const LoginPage = () => {
                 startAdornment: <LockIcon color="action" sx={{ mr: 1 }} />,
               }}
             />
-            <Button
+            <StyledButton
               type="submit"
               fullWidth
               variant="contained"
-              color="primary"
               size="large"
-              startIcon={<LoginIcon />}
+              startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <LoginIcon />}
+              disabled={loading}
             >
-              Login
-            </Button>
+              {loading ? 'Logging in...' : 'Login'}
+            </StyledButton>
             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
               <MuiLink component={Link} to="/forgot-password" variant="body2">
                 Forgot password?
@@ -138,14 +176,13 @@ const LoginPage = () => {
 
       <StyledAppBar position="static" component="footer">
         <Toolbar sx={{ justifyContent: 'center' }}>
-          <Button
+          <StyledButton
             component={Link}
             to="/select-role"
-            color="inherit"
             startIcon={<RegisterIcon />}
           >
             Register
-          </Button>
+          </StyledButton>
         </Toolbar>
       </StyledAppBar>
 

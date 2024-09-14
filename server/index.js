@@ -3,6 +3,7 @@ const app = express();
 const cors = require("cors");
 
 const Logger = require("./helpers/Logger");
+const timetableCronJob = require("./jobs/timetable.cron");
 
 const { mySQLConnect } = require("./helpers/Database");
 const authMiddleware =require ("./Middleware/Auth")
@@ -14,17 +15,18 @@ const facultyRoutes = require("./routes/faculty.routes");
 const timetableRoutes = require("./routes/timetable.routes");
 const accountRoutes = require("./routes/account.routes");
 const roomRoutes = require("./routes/room.routes");
+const reoccurringEventsCronJob = require("./jobs/reoccur");
 
 app.use(cors());
 
 app.use(express.json());
 
-app.use("/api/v1/user",authMiddleware, userRoutes);
-app.use("/api/v1/course",authMiddleware, courseRoutes);
-app.use("/api/v1/department", authMiddleware, departmentRoutes);
-app.use("/api/v1/faculty", authMiddleware, facultyRoutes);
-app.use("/api/v1/room", authMiddleware, roomRoutes);
-app.use("/api/v1/timetable", authMiddleware, timetableRoutes);
+app.use("/api/v1/user", userRoutes);
+app.use("/api/v1/course", courseRoutes);
+app.use("/api/v1/department",  departmentRoutes);
+app.use("/api/v1/faculty",  facultyRoutes);
+app.use("/api/v1/room",  roomRoutes);
+app.use("/api/v1/timetable",  timetableRoutes);
 app.use("/api/v1/account", accountRoutes);
 
 
@@ -34,6 +36,8 @@ mySQLConnect().then(() => {
 
   app.listen(8080, () => {
     console.log("http://localhost:8080")
+    timetableCronJob();
+    reoccurringEventsCronJob()
   })
 
 }).catch(error => {

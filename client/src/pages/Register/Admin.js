@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -12,10 +12,10 @@ import {
   Toolbar,
   Card,
   CardContent,
-  Grid,
   Alert,
   useTheme,
   useMediaQuery,
+  CircularProgress,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -31,6 +31,8 @@ import {
 import { motion } from 'framer-motion';
 
 import { api } from '../../apis/index';
+import Session from '../../helpers/Session';
+import { subscribeToPushNotifications } from '../../pushNotifications';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   backgroundColor: theme.palette.grey[800],
@@ -81,7 +83,7 @@ const SendConfirmMail = ({ updateState }) => {
     <Container maxWidth="sm">
       <StyledCard>
         <CardContent>
-          <Typography variant="h4" component="h1" gutterBottom align="center" color="primary">
+          <Typography variant="h4" component="h1" gutterBottom align="center" color="textPrimary">
             <EmailIcon fontSize="large" /> Send Confirmation Email
           </Typography>
           <StyledForm onSubmit={handleSubmit}>
@@ -97,12 +99,12 @@ const SendConfirmMail = ({ updateState }) => {
             <Button
               fullWidth
               variant="contained"
-              color="primary"
+              color="inherit"
               type="submit"
               disabled={isLoading || isSent}
               startIcon={isSent ? <VerifiedUserIcon /> : <SendIcon />}
             >
-              {isLoading ? 'Sending...' : isSent ? 'Sent' : 'Send Confirmation'}
+              {isLoading ? <CircularProgress size={24} /> : isSent ? 'Sent' : 'Send Confirmation'}
             </Button>
           </StyledForm>
         </CardContent>
@@ -119,8 +121,10 @@ const AdminRegistrationForm = () => {
     confirmPassword: '',
     code: '',
     phone: '',
+    fcm_token: Session.getLocalStorage("wp")
   });
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const validateForm = () => {
@@ -139,6 +143,23 @@ const AdminRegistrationForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  useEffect(() => {
+    requestNotificationPermission();
+  }, [])
+  const requestNotificationPermission = async () => {
+    const permission = await Notification.requestPermission();
+    if (permission === "granted") {
+      const subscription = await subscribeToPushNotifications();
+      if (subscription) {
+        console.log('Push notification subscription:', subscription);
+        console.log(subscription);
+        Session.setLocalStorage("wp", JSON.stringify(subscription));
+      }
+    } else if (permission === "denied") {
+      alert("You denied notification permissions. Some features may not work.");
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prevData => ({ ...prevData, [name]: value }));
@@ -147,6 +168,7 @@ const AdminRegistrationForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateForm()) {
+      setIsLoading(true);
       const { name, email, password, code, phone } = formData;
 
       try {
@@ -161,6 +183,8 @@ const AdminRegistrationForm = () => {
         }
       } catch (error) {
         toast.error(error.message || 'An error occurred');
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -168,7 +192,7 @@ const AdminRegistrationForm = () => {
   return (
     <StyledCard>
       <CardContent>
-        <Typography variant="h4" component="h1" gutterBottom align="center" color="primary">
+        <Typography variant="h4" component="h1" gutterBottom align="center" color="textPrimary">
           Admin Registration
         </Typography>
         <StyledForm onSubmit={handleSubmit}>
@@ -256,11 +280,12 @@ const AdminRegistrationForm = () => {
           <Button
             fullWidth
             variant="contained"
-            color="primary"
+            color="inherit"
             type="submit"
             size="large"
+            disabled={isLoading}
           >
-            Register
+            {isLoading ? <CircularProgress size={24} /> : 'Register'}
           </Button>
         </StyledForm>
         {Object.keys(errors).length > 0 && (
@@ -276,7 +301,6 @@ const AdminRegistrationForm = () => {
 const Admin = () => {
   const [hasSentMail, setHasSentMail] = useState(false);
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
